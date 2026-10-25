@@ -1,0 +1,2979 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>גביע הוגוורטס</title>
+  <meta name="theme-color" content="#5a1414" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="גביע הוגוורטס" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Varela+Round&display=swap" />
+  <style>
+:root {
+  --red: #8e1b1b;
+  --red-d: #5a1414;
+  --gold: #f5c542;
+  --gold-l: #ffe08a;
+  --ink: #2a1a10;
+  --parch: #fbf3dd;
+  --parch-d: #efe0b8;
+  --ok: #2fa84f;
+  --no: #e0663a;
+  --sheet: rgba(30, 14, 10, 0.55);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #8fcbff; font-family: 'Varela Round', system-ui, sans-serif; color: var(--ink); user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+button { font-family: inherit; color: inherit; cursor: pointer; border: 0; }
+#app { position: fixed; inset: 0; }
+#view { position: absolute; inset: 0; }
+
+/* מצבים */
+#app:not([data-mode="match"]) .matchonly { display: none !important; }
+#app:not([data-mode="menu"]) .menuonly { display: none !important; }
+
+/* HUD */
+#hud { position: absolute; inset: 0; pointer-events: none; }
+#topBar { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left)); }
+#topBar .group { display: flex; gap: 8px; align-items: center; pointer-events: auto; }
+.round { width: 54px; height: 54px; border-radius: 50%; background: rgba(255, 255, 255, 0.92); font-size: 26px; display: grid; place-items: center; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.18); }
+.round:active { transform: translateY(2px); box-shadow: none; }
+.round.big { width: 68px; height: 68px; font-size: 32px; }
+#tools .kl-btn, #tools button { pointer-events: auto; }
+.pill { background: rgba(255, 255, 255, 0.92); border-radius: 30px; padding: 8px 16px; font-family: 'Secular One', sans-serif; font-size: 22px; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.18); white-space: nowrap; }
+#coins.pop { animation: pop 0.35s; }
+@keyframes pop { 50% { transform: scale(1.25); } }
+#scoreboard { pointer-events: none; display: flex; align-items: center; gap: 10px; background: linear-gradient(#3a1c12, #1d0d08); color: #fff; border: 3px solid var(--gold); border-radius: 18px; padding: 4px 14px; font-family: 'Secular One', sans-serif; font-size: 30px; direction: ltr; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25); }
+#scoreboard .team { font-size: 28px; }
+#scoreboard #half { font-size: 18px; opacity: 0.85; }
+#playsBar { position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 62px); left: 50%; transform: translateX(-50%); width: min(260px, 50vw); height: 8px; background: rgba(0, 0, 0, 0.25); border-radius: 8px; overflow: hidden; }
+#playsBar i { display: block; height: 100%; width: 0; background: var(--gold); transition: width 0.4s; margin-right: auto; }
+#streak { display: flex; gap: 4px; }
+#streak i { width: 14px; height: 14px; border-radius: 50%; background: rgba(255, 255, 255, 0.5); border: 2px solid #fff; }
+#streak i.on { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+#itemSlot { font-size: 30px; }
+#itemSlot.ready { background: var(--gold-l); animation: glow 1s infinite alternate; }
+#itemSlot.armed { background: #b7f0c4; outline: 4px solid var(--ok); }
+#itemSlot.spin { animation: spin 0.15s linear infinite; }
+@keyframes glow { to { box-shadow: 0 0 18px 4px var(--gold); } }
+@keyframes spin { to { transform: rotate(20deg) scale(1.08); } }
+
+#banner { position: absolute; top: 24%; left: 50%; transform: translate(-50%, -50%) scale(0.6); opacity: 0; font-family: 'Secular One', sans-serif; font-size: clamp(30px, 7vw, 64px); color: #fff; text-shadow: 0 4px 0 rgba(0, 0, 0, 0.35), 0 0 24px rgba(0, 0, 0, 0.3); white-space: nowrap; transition: transform 0.25s cubic-bezier(.3, 1.6, .5, 1), opacity 0.25s; }
+#banner.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+#banner.goal { color: var(--gold); font-size: clamp(44px, 11vw, 96px); }
+#banner.gold { color: var(--gold-l); }
+#banner.soft { font-size: clamp(24px, 5vw, 44px); }
+#toast { position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 80px); left: 50%; transform: translate(-50%, -16px); opacity: 0; background: var(--parch); border: 3px solid var(--gold); border-radius: 18px; padding: 10px 22px; font-size: 26px; text-align: center; transition: 0.25s; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); max-width: 92vw; }
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+#toast small { font-size: 17px; opacity: 0.8; }
+#aimMark { position: absolute; width: 46px; height: 46px; margin: -23px 0 0 -23px; border: 5px solid var(--gold); border-radius: 50%; opacity: 0; }
+#aimMark.show { animation: mark 0.7s ease-out; }
+@keyframes mark { 0% { opacity: 1; transform: scale(1.6); } 100% { opacity: 0; transform: scale(0.6); } }
+
+/* אתגר */
+#challenge { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(760px, 96vw); background: var(--parch); border: 4px solid var(--gold); border-radius: 26px; padding: 12px 16px 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); }
+#challenge.in { animation: up 0.3s cubic-bezier(.3, 1.4, .5, 1); }
+@keyframes up { from { transform: translate(-50%, 60px); opacity: 0; } }
+.ch-head { display: flex; justify-content: center; gap: 8px; font-size: 20px; color: var(--red); font-weight: bold; }
+#chPrompt { display: flex; justify-content: center; align-items: center; gap: 14px; min-height: 84px; margin: 6px 0 10px; }
+#chPrompt .say { width: 76px; height: 76px; border-radius: 50%; background: var(--red); color: #fff; font-size: 36px; box-shadow: 0 4px 0 var(--red-d); }
+#chPrompt .say.big { width: 92px; height: 92px; font-size: 44px; animation: pulse 1.4s infinite; }
+#chPrompt .say.slow { width: 62px; height: 62px; font-size: 30px; background: #6b4a2a; box-shadow: 0 4px 0 #3e2a17; }
+@keyframes pulse { 50% { transform: scale(1.06); } }
+#chPrompt .word { font-family: 'Secular One', sans-serif; font-size: clamp(40px, 9vw, 68px); letter-spacing: 2px; direction: ltr; }
+#chPrompt .word u { text-decoration: none; display: inline-block; min-width: 0.6em; border-bottom: 6px solid var(--red); color: transparent; }
+#chPrompt .pic { font-size: 64px; line-height: 1; }
+#chPrompt .pic.big { font-size: 84px; }
+#chPrompt .pic img { height: 84px; border-radius: 12px; }
+#chOptions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; direction: ltr; }
+#chOptions[data-n="2"] { grid-template-columns: repeat(2, 1fr); }
+.opt { min-height: 116px; background: #fff; border: 4px solid var(--parch-d); border-radius: 20px; font-size: 58px; display: grid; place-items: center; box-shadow: 0 5px 0 var(--parch-d); transition: transform 0.1s; padding: 6px; }
+.opt:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--parch-d); }
+.opt .word { font-family: 'Secular One', sans-serif; font-size: clamp(28px, 6vw, 44px); }
+.opt .letter { font-family: 'Secular One', sans-serif; font-size: 60px; }
+.opt .he { font-size: 30px; direction: rtl; }
+.opt img { max-height: 90px; max-width: 100%; border-radius: 10px; }
+.opt.ok { background: #d9f7e0; border-color: var(--ok); box-shadow: 0 5px 0 var(--ok); animation: pop 0.35s; }
+.opt.no { background: #ffe6dc; border-color: var(--no); animation: shake 0.35s; }
+@keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+#aim { position: absolute; inset: 0; pointer-events: auto; cursor: crosshair; touch-action: none; }
+.aim-hint { position: absolute; bottom: max(30px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.55); color: #fff; padding: 12px 26px; border-radius: 30px; font-size: 26px; white-space: nowrap; animation: pulse 1s infinite; }
+
+/* תפריט */
+#menu { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: calc(max(10px, env(safe-area-inset-top)) + 64px) 16px max(20px, env(safe-area-inset-bottom)); pointer-events: none; }
+#menu > * { pointer-events: auto; }
+.brand { text-align: center; }
+.brand h1 { margin: 0; font-family: 'Secular One', sans-serif; font-size: clamp(34px, 7vw, 64px); color: var(--gold); text-shadow: 0 4px 0 var(--red-d), 0 0 22px rgba(0, 0, 0, 0.35); line-height: 1.05; }
+.brand p { margin: 6px 0 0; display: inline-block; background: rgba(255, 255, 255, 0.85); padding: 4px 16px; border-radius: 20px; font-size: 20px; }
+#ladder { display: flex; align-items: center; gap: 6px; background: rgba(30, 14, 10, 0.55); padding: 10px 14px; border-radius: 22px; margin-top: auto; margin-bottom: 14px; max-width: 100%; overflow-x: auto; }
+#ladder .step { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; color: #fff; opacity: 0.6; min-width: 64px; }
+#ladder .step.won, #ladder .step.next { opacity: 1; }
+#ladder .step.next .crest { outline: 4px solid var(--gold); animation: glow 1s infinite alternate; }
+#ladder .step small { font-size: 14px; white-space: nowrap; }
+#ladder .step b { position: absolute; top: -4px; left: 2px; background: var(--ok); border-radius: 50%; width: 22px; height: 22px; font-size: 14px; display: grid; place-items: center; }
+#ladder .arrow { color: var(--gold); font-style: normal; font-size: 14px; }
+.crest { width: 50px; height: 56px; display: grid; place-items: center; font-size: 28px; background: linear-gradient(135deg, var(--c1) 55%, var(--c2) 55%); border-radius: 12px 12px 24px 24px; border: 2px solid rgba(255, 255, 255, 0.7); }
+.go { background: linear-gradient(#ffd96a, var(--gold)); color: var(--ink); font-family: 'Secular One', sans-serif; font-size: clamp(24px, 4.6vw, 34px); padding: 14px 34px; border-radius: 40px; box-shadow: 0 6px 0 #b8861a, 0 10px 24px rgba(0, 0, 0, 0.3); }
+.go:active { transform: translateY(4px); box-shadow: 0 2px 0 #b8861a; }
+#playBtn { animation: pulse 1.6s infinite; }
+.menu-row { display: flex; gap: 12px; margin-top: 14px; }
+.tile-btn { background: rgba(255, 255, 255, 0.94); border-radius: 22px; padding: 12px 22px; font-size: 24px; font-family: 'Secular One', sans-serif; box-shadow: 0 5px 0 rgba(0, 0, 0, 0.2); }
+.tile-btn small { background: var(--gold); border-radius: 12px; padding: 0 8px; font-size: 18px; }
+.tile-btn.small { padding: 12px 16px; opacity: 0.85; }
+.ghost { background: rgba(255, 255, 255, 0.9); border: 3px solid var(--parch-d); font-size: 22px; padding: 12px 24px; border-radius: 30px; font-family: 'Secular One', sans-serif; text-decoration: none; color: var(--ink); display: inline-block; }
+
+/* חלון כללי */
+.overlay { position: absolute; inset: 0; display: grid; place-items: center; background: var(--sheet); padding: 16px; z-index: 20; }
+.overlay[hidden] { display: none; }
+#sheetBody, #sheetBody2 { background: var(--parch); border: 5px solid var(--gold); border-radius: 28px; padding: 22px 24px; text-align: center; width: min(560px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4); animation: up2 0.3s cubic-bezier(.3, 1.4, .5, 1); }
+@keyframes up2 { from { transform: translateY(40px) scale(0.95); opacity: 0; } }
+.panel-sheet #sheetBody { width: min(860px, 100%); text-align: right; }
+.panel-sheet.small #sheetBody { width: min(420px, 100%); text-align: center; }
+.end-sheet #sheetBody { width: min(640px, 100%); }
+.big { font-family: 'Secular One', sans-serif; font-size: clamp(32px, 6vw, 48px); color: var(--red); }
+.sub { font-size: 21px; margin: 8px 0; }
+.trophy { font-size: 72px; animation: pop 0.8s; }
+.bigscore { display: flex; justify-content: center; align-items: center; gap: 14px; font-family: 'Secular One', sans-serif; font-size: 44px; direction: ltr; margin: 8px 0; }
+.stats { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 10px 0; }
+.stats span { background: #fff; border-radius: 16px; padding: 6px 14px; font-size: 22px; }
+.talk { background: #fff7d6; border-radius: 14px; padding: 10px 14px; font-size: 19px; }
+.btns { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.sheet-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.sheet-head h2 { margin: 0; flex: 1; font-family: 'Secular One', sans-serif; font-size: 30px; color: var(--red); }
+.hint { font-size: 17px; opacity: 0.8; margin: 6px 0; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.chip { background: #fff; border: 3px solid var(--parch-d); border-radius: 20px; padding: 8px 16px; font-size: 18px; }
+.chip.on { background: var(--gold-l); border-color: var(--gold); }
+
+/* קלף מילה חדשה */
+.newcard .nc-top { font-family: 'Secular One', sans-serif; font-size: 24px; color: var(--red); display: flex; justify-content: space-between; }
+.newcard .nc-top span { font-size: 18px; opacity: 0.6; }
+.nc-pic { font-size: 110px; line-height: 1.2; margin-top: 6px; }
+.nc-pic img { max-height: 140px; border-radius: 16px; }
+.nc-pic .he { font-size: 50px; }
+.nc-en { font-family: 'Secular One', sans-serif; font-size: clamp(54px, 12vw, 84px); line-height: 1; letter-spacing: 3px; }
+.nc-he { font-size: 30px; margin-top: 4px; }
+.nc-sent { font-size: 22px; opacity: 0.75; margin-top: 8px; }
+.card-sheet #sheetBody { background: linear-gradient(160deg, #fff8e3, #f3dfa8); }
+
+/* ארון קלפים */
+.cardgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 12px; margin-top: 8px; direction: ltr; }
+.cardrow { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; direction: ltr; margin-top: 6px; }
+.newcards .lbl { font-family: 'Secular One', sans-serif; font-size: 22px; color: var(--red); margin-top: 10px; }
+.wcard { position: relative; width: 100%; min-width: 108px; max-width: 150px; aspect-ratio: 3 / 4; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18); overflow: hidden; }
+.wcard .pic { font-size: 50px; line-height: 1; }
+.wcard .pic img { max-width: 80px; max-height: 70px; border-radius: 8px; }
+.wcard .pic .he { font-size: 24px; }
+.wcard .en { font-family: 'Secular One', sans-serif; font-size: 22px; }
+.wcard .hb { font-size: 18px; display: none; }
+.wcard.flip .hb { display: block; }
+.wcard.bronze { background: linear-gradient(160deg, #f6d5b5, #c98a55); border: 3px solid #a5683a; }
+.wcard.silver { background: linear-gradient(160deg, #f4f7fa, #b7c2cc); border: 3px solid #8e9aa6; }
+.wcard.gold { background: linear-gradient(160deg, #fff4b8, #f5c542 60%, #e0a420); border: 3px solid #b8861a; }
+.wcard.gold::after { content: ''; position: absolute; inset: 0; background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.7) 50%, transparent 70%); transform: translateX(-100%); animation: shine 2.6s infinite; }
+@keyframes shine { 60%, 100% { transform: translateX(100%); } }
+.wcard.locked { background: repeating-linear-gradient(45deg, #5a4636, #5a4636 10px, #4d3b2d 10px, #4d3b2d 20px); border: 3px solid #3a2b20; }
+.wcard .q { font-size: 44px; color: rgba(255, 255, 255, 0.5); font-family: 'Secular One', sans-serif; }
+
+/* חנות */
+.shopgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 8px; }
+.shopitem { background: #fff; border: 3px solid var(--parch-d); border-radius: 18px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 4px 0 var(--parch-d); }
+.shopitem .emo { font-size: 44px; }
+.shopitem .nm { font-size: 17px; min-height: 2.4em; display: grid; place-items: center; text-align: center; }
+.shopitem .pr { font-family: 'Secular One', sans-serif; font-size: 19px; background: var(--gold-l); border-radius: 12px; padding: 2px 12px; }
+.shopitem.owned .pr { background: #e8eef5; }
+.shopitem.on { border-color: var(--ok); background: #effbf1; }
+.shopitem.on .pr { background: #b7f0c4; }
+.shopitem.cant { opacity: 0.55; }
+.shop-sheet { background: rgba(30, 14, 10, 0.25); align-items: end; }
+.shop-sheet #sheetBody { max-height: 58vh; }
+
+/* מסך הורים */
+.gate { font-size: 34px; width: 160px; text-align: center; padding: 8px; border-radius: 14px; border: 3px solid var(--parch-d); font-family: inherit; }
+.gate.shake { animation: shake 0.35s; border-color: var(--no); }
+.parents h3 { margin: 16px 0 6px; color: var(--red); font-size: 20px; }
+.parents p { font-size: 17px; margin: 4px 0; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+.tile { background: #fff; border-radius: 16px; padding: 10px; text-align: center; box-shadow: 0 3px 0 var(--parch-d); }
+.tile b { display: block; font-family: 'Secular One', sans-serif; font-size: 32px; color: var(--red); }
+.tile span { font-size: 15px; }
+.tile.gold { background: var(--gold-l); }
+.tbl { width: 100%; border-collapse: collapse; font-size: 16px; background: #fff; border-radius: 12px; overflow: hidden; }
+.tbl th, .tbl td { padding: 6px 8px; border-bottom: 1px solid var(--parch-d); text-align: right; }
+.tbl th { background: var(--red); color: var(--gold-l); }
+.tbl tr.hard td { background: #fff1ea; }
+.tbl tr.gold td { background: #fffbe6; }
+.tbl tr.none td { opacity: 0.55; }
+.status { font-size: 20px; font-weight: bold; }
+.status.on { color: var(--ok); }
+.url { width: 100%; font-size: 15px; padding: 10px; border-radius: 12px; border: 2px solid var(--parch-d); direction: ltr; font-family: monospace; user-select: text; -webkit-user-select: text; }
+.field { display: block; font-size: 18px; margin: 10px 0; }
+.field input { display: block; margin-top: 4px; font-size: 22px; padding: 8px 12px; border-radius: 12px; border: 2px solid var(--parch-d); font-family: inherit; width: min(320px, 100%); }
+.btnlink { font-size: 20px; }
+
+/* מסך קטן */
+@media (max-height: 560px) {
+  .opt { min-height: 84px; font-size: 44px; }
+  #chPrompt { min-height: 64px; margin: 2px 0 6px; }
+  #chPrompt .say.big { width: 72px; height: 72px; font-size: 34px; }
+  #chPrompt .pic.big { font-size: 60px; }
+  #chPrompt .word { font-size: 40px; }
+  .round { width: 46px; height: 46px; font-size: 22px; }
+  #scoreboard { font-size: 24px; padding: 2px 10px; }
+  .nc-pic { font-size: 70px; }
+  .nc-en { font-size: 50px; }
+  #ladder .crest { width: 40px; height: 44px; font-size: 22px; }
+  .brand h1 { font-size: 34px; }
+}
+@media (max-width: 620px) {
+  #scoreboard { position: absolute; top: calc(max(10px, env(safe-area-inset-top)) + 62px); left: 50%; transform: translateX(-50%); font-size: 24px; gap: 8px; padding: 2px 12px; }
+  #playsBar { top: calc(max(10px, env(safe-area-inset-top)) + 106px); }
+  #toast { top: calc(max(10px, env(safe-area-inset-top)) + 122px); }
+  #scoreboard .team { font-size: 20px; }
+  #streak { display: none; }
+  .opt { min-height: 96px; font-size: 46px; }
+  .tile-btn { font-size: 20px; padding: 10px 16px; }
+  #toast { font-size: 21px; }
+}
+
+</style>
+</head>
+<body>
+  <div id="app" data-mode="menu">
+    <div id="view"></div>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div id="topBar">
+        <div class="group" id="tools">
+          <button id="muteBtn" class="round" aria-label="השתקה">🔊</button>
+          <button id="pauseBtn" class="round matchonly" aria-label="הפסקה">⏸️</button>
+        </div>
+        <div id="scoreboard" class="matchonly" aria-label="תוצאה">
+          <span class="team" id="homeName"></span><b id="sHome">0</b>
+          <span id="half">1️⃣</span>
+          <b id="sAway">0</b><span class="team" id="awayName"></span>
+        </div>
+        <div class="group">
+          <div id="streak" class="matchonly" aria-label="רצף"></div>
+          <button id="itemSlot" class="round matchonly" aria-label="פריט">❔</button>
+          <div id="coins" class="pill" aria-label="גליאונים">🪙 0</div>
+        </div>
+      </div>
+      <div id="playsBar" class="matchonly"><i></i></div>
+      <div id="banner"></div>
+      <div id="toast" role="status"></div>
+      <div id="aimMark"></div>
+    </div>
+
+    <!-- אתגר מילה -->
+    <div id="challenge" hidden>
+      <div class="ch-head"><span id="chIcon">👂</span><span id="chLabel"></span></div>
+      <div id="chPrompt"></div>
+      <div id="chOptions"></div>
+    </div>
+
+    <!-- כיוון בעיטה -->
+    <div id="aim" hidden><div class="aim-hint">👆 גע בשער או החלק לבעיטה!</div></div>
+
+    <!-- תפריט -->
+    <div id="menu" class="menuonly">
+      <div class="brand">
+        <h1 id="title">גביע הוגוורטס</h1>
+        <p id="subtitle"></p>
+      </div>
+      <div id="ladder" aria-label="הליגה"></div>
+      <button id="playBtn" class="go">⚽ למשחק!</button>
+      <div class="menu-row">
+        <button id="cardsBtn" class="tile-btn">🃏 קלפים</button>
+        <button id="shopBtn" class="tile-btn">🛒 חנות</button>
+        <button id="parentsBtn" class="tile-btn small" aria-label="מסך הורים">🔒</button>
+      </div>
+    </div>
+
+    <!-- חלון כללי: מחצית, סיום, קלפים, חנות, הורים, הפסקה -->
+    <div id="sheet" class="overlay" hidden><div id="sheetBody"></div></div>
+
+    <div id="loadError" class="overlay" hidden>
+      <div id="sheetBody2"><div class="big">🛰️</div><p class="sub">צריך חיבור לאינטרנט בפעם הראשונה כדי לטעון את התלת-ממד. נסו לרענן את הדף.</p></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+// ---- shared/learn.js ----
+// KidsLearn — מודול למידה משותף לכל המשחקים בסטודיו.
+// כרטיסי "הידעת?" שמוקראים בקול + "אלבום גילויים" שהילד אוסף לאורך המשחק.
+// קובץ JS רגיל (לא module) כדי שיעבוד גם בפתיחה ישירה של index.html (file://).
+// מדריך שימוש: shared/README.md. עקרונות תוכן: context/learning-design.md.
+//
+// שימוש מינימלי:
+//   index.html: לטעון את ../../shared/learn.js ואז facts.js (מגדיר const FACTS = [...]) לפני game.js
+//   KidsLearn.init({ gameId: "my-game", facts: FACTS, isMuted: () => muted });
+//   KidsLearn.addAlbumButton(document.getElementById("topBar"));
+//   await KidsLearn.show();                   // בהפסקה טבעית (סוף שלב / פריט חדש)
+
+(function () {
+  "use strict";
+
+  const LEVELS = ["little", "mid", "big"]; // 3–4, 5–7, 8–10
+  const LEVEL_ICONS = { little: "🐣", mid: "🧒", big: "🧑" };
+  const LEVEL_KEY = "kidslearn:level";
+  const VOICE_KEY = "kidslearn:autoVoice"; // הקראה אוטומטית — משותף לכל המשחקים
+
+  let opts = null;
+  let facts = [];
+  let collected = new Set();
+  let level = "mid";
+  let autoVoice = true;
+  let openState = null; // { resolve, el } כשכרטיס/אלבום פתוח
+  let albumBtn = null;
+  let hebrewVoice = null;
+
+  // ---------- אחסון (עטוף ב-try כי localStorage יכול לזרוק במצב פרטי/ארטיפקט) ----------
+  function load(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw == null ? fallback : JSON.parse(raw);
+    } catch (e) {
+      return fallback;
+    }
+  }
+  function save(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) { /* ממשיכים בלי שמירה */ }
+  }
+  const collectedKey = () => `kidslearn:${opts.gameId}:collected`;
+
+  // ---------- הקראה בקול ----------
+  let pendingText = null; // טקסט שמחכה שהקולות של הדפדפן ייטענו
+  let voiceWaitTimer = null;
+
+  function matchesLang(v) {
+    // "he-IL" / "he_IL", ובחלק מהמכשירים (אנדרואיד ישן) עברית מסומנת "iw"
+    const l = (v.lang || "").toLowerCase().replace("_", "-");
+    const p = opts.lang.slice(0, 2).toLowerCase();
+    const prefixes = p === "he" ? ["he", "iw"] : [p];
+    return prefixes.some((x) => l === x || l.startsWith(x + "-"));
+  }
+
+  function pickVoice() {
+    if (!("speechSynthesis" in window)) return;
+    const voices = speechSynthesis.getVoices().filter(matchesLang);
+    hebrewVoice = voices.find((v) => v.localService) || voices[0] || null;
+    if (hebrewVoice && pendingText) {
+      const t = pendingText;
+      pendingText = null;
+      speakNow(t);
+    }
+  }
+
+  // בכרום רשימת הקולות נטענת באיחור, ובספארי לפעמים בלי אירוע voiceschanged — בודקים שוב כמה פעמים
+  function waitForVoice() {
+    if (voiceWaitTimer) return;
+    let tries = 0;
+    voiceWaitTimer = setInterval(() => {
+      pickVoice();
+      if (hebrewVoice || ++tries >= 8) {
+        clearInterval(voiceWaitTimer);
+        voiceWaitTimer = null;
+        pendingText = null;
+      }
+    }, 250);
+  }
+
+  // מקריאים משפט-משפט בלי סימני פיסוק בכלל: יש קולות שמקריאים "." ו-"!" בשמם ("dot"),
+  // והפיצול למשפטים שומר על ההפסקה הטבעית ביניהם
+  function speakNow(clean) {
+    clean
+      .split(/[.!?…]+/)
+      .map((s) => s.replace(/[,:;"'״׳()\[\]\-–—]/g, " ").replace(/\s+/g, " ").trim())
+      .filter(Boolean)
+      .forEach((sentence) => {
+        const u = new SpeechSynthesisUtterance(sentence);
+        u.lang = opts.lang;
+        u.voice = hebrewVoice;
+        u.rate = 0.9;
+        u.pitch = 1.1;
+        speechSynthesis.speak(u);
+      });
+  }
+
+  // הקראה אוטומטית (כרטיס שנפתח, קריאות של המשחק). כבויה = שקט, אבל כפתור 🔊 בכרטיס עדיין מקריא
+  function say(text) {
+    if (autoVoice) speakText(text);
+  }
+
+  function speakText(text) {
+    if (!text || !("speechSynthesis" in window)) return;
+    if (opts && opts.isMuted && opts.isMuted()) return;
+    stopSpeaking();
+    const clean = text.replace(/[\p{Extended_Pictographic}️‍]/gu, "").trim();
+    if (!clean) return;
+    if (!hebrewVoice) pickVoice();
+    // אף פעם לא מדברים בלי קול עברי: קול ברירת מחדל (אנגלי) מדלג על האותיות ומקריא רק
+    // את הפיסוק ("exclamation point", "dot"). אם הקולות עוד לא נטענו — מחכים להם.
+    if (!hebrewVoice) {
+      pendingText = clean;
+      waitForVoice();
+      return;
+    }
+    speakNow(clean);
+  }
+
+  function stopSpeaking() {
+    pendingText = null;
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+  }
+
+  // ---------- עזרי תוכן ----------
+  function textFor(fact, lvl) {
+    // אם אין טקסט לרמה המבוקשת — לוקחים את הרמה הקרובה ביותר שקיימת
+    const i = LEVELS.indexOf(lvl);
+    const order = [i, i - 1, i + 1, i - 2, i + 2].filter((n) => n >= 0 && n < LEVELS.length);
+    for (const n of order) if (fact[LEVELS[n]]) return { text: fact[LEVELS[n]], level: LEVELS[n] };
+    return { text: "", level: lvl };
+  }
+
+  function nextUncollected() {
+    return facts.find((f) => !collected.has(f.id)) || null;
+  }
+
+  function el(tag, cls, html) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html != null) e.innerHTML = html;
+    return e;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  function picture(fact, cls) {
+    if (fact.image) return `<img class="${cls}" src="${escapeHtml(fact.image)}" alt="">`;
+    return `<div class="${cls}">${escapeHtml(fact.emoji || "💡")}</div>`;
+  }
+
+  // ---------- שכבת-על (overlay) ----------
+  function openOverlay(content, onClose) {
+    const overlay = el("div", "kl-overlay");
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+    return new Promise((resolve) => {
+      openState = { el: overlay, resolve: () => { onClose && onClose(); resolve(); } };
+    });
+  }
+
+  function closeOverlay() {
+    if (!openState) return;
+    const { el: overlay, resolve } = openState;
+    openState = null;
+    stopSpeaking();
+    overlay.remove();
+    updateAlbumBadge();
+    resolve();
+  }
+
+  // מקשים בזמן שכרטיס פתוח: רווח/אנטר/Esc סוגרים, והמשחק לא מקבל אותם
+  function onKey(e) {
+    if (!openState) return;
+    if (e.key === " " || e.key === "Enter" || e.key === "Escape") {
+      e.preventDefault();
+      closeOverlay();
+    }
+    e.stopPropagation();
+  }
+
+  // ---------- כרטיס "הידעת?" ----------
+  function renderCard(fact, isNew) {
+    let shown = textFor(fact, level);
+    const card = el("div", "kl-card");
+    card.innerHTML = `
+      ${isNew ? '<div class="kl-badge" aria-hidden="true">✨ חדש! ✨</div>' : ""}
+      ${picture(fact, "kl-pic")}
+      ${fact.title ? `<div class="kl-title">${escapeHtml(fact.title)}</div>` : ""}
+      <div class="kl-text"></div>
+      <div class="kl-row">
+        <button class="kl-btn kl-voice" aria-label="הקראה">${opts.isMuted && opts.isMuted() ? "🔇" : "🔊"}</button>
+        <button class="kl-btn kl-more" aria-label="עוד">➕</button>
+        <button class="kl-btn kl-ok" aria-label="סגירה">✔️</button>
+      </div>`;
+    const textEl = card.querySelector(".kl-text");
+    const moreBtn = card.querySelector(".kl-more");
+    const refresh = () => {
+      textEl.textContent = shown.text;
+      // ➕ מופיע רק אם יש רמת הסבר עמוקה יותר מזו שמוצגת
+      const deeper = LEVELS.slice(LEVELS.indexOf(shown.level) + 1).some((l) => fact[l]);
+      moreBtn.style.visibility = deeper ? "visible" : "hidden";
+    };
+    refresh();
+    card.querySelector(".kl-voice").onclick = () => speakText(shown.text);
+    moreBtn.onclick = () => {
+      const next = LEVELS.slice(LEVELS.indexOf(shown.level) + 1).find((l) => fact[l]);
+      if (!next) return;
+      shown = { text: fact[next], level: next };
+      refresh();
+      say(shown.text);
+    };
+    card.querySelector(".kl-ok").onclick = closeOverlay;
+    return { card, speak: () => say(shown.text) };
+  }
+
+  /**
+   * מציג כרטיס עובדה. בלי id — העובדה הבאה שעוד לא נאספה (ואם הכל נאסף — אקראית).
+   * מחזיר Promise שמתממש כשהכרטיס נסגר, כדי שהמשחק יוכל לחכות/להשהות.
+   */
+  function show(id) {
+    if (!opts) throw new Error("KidsLearn.init() must be called first");
+    if (openState) closeOverlay();
+    let fact = id ? facts.find((f) => f.id === id) : nextUncollected();
+    if (!fact) fact = facts[Math.floor(Math.random() * facts.length)];
+    if (!fact) return Promise.resolve();
+    const isNew = !collected.has(fact.id);
+    collect(fact.id);
+    const { card, speak } = renderCard(fact, isNew);
+    opts.onOpen && opts.onOpen(fact);
+    const p = openOverlay(card, () => opts.onClose && opts.onClose(fact));
+    card.querySelector(".kl-ok").focus();
+    speak();
+    return p;
+  }
+
+  // ---------- אלבום גילויים ----------
+  function openAlbum() {
+    if (!opts) throw new Error("KidsLearn.init() must be called first");
+    if (openState) closeOverlay();
+    const box = el("div", "kl-card kl-album");
+    const draw = () => {
+      box.innerHTML = `
+        <div class="kl-title">📖 ${collected.size} / ${facts.length}</div>
+        <div class="kl-levels" role="group" aria-label="רמה">
+          ${LEVELS.map((l) => `<button class="kl-lvl${l === level ? " on" : ""}" data-l="${l}" aria-label="${l}">${LEVEL_ICONS[l]}</button>`).join("")}
+          <span class="kl-sep" aria-hidden="true"></span>
+          <button class="kl-lvl kl-autoVoice${autoVoice ? " on" : ""}" aria-pressed="${autoVoice}" aria-label="הקראה אוטומטית">${autoVoice ? "🗣️" : "🤐"}</button>
+        </div>
+        <div class="kl-grid">
+          ${facts.map((f) => collected.has(f.id)
+            ? `<button class="kl-cell" data-id="${escapeHtml(f.id)}">${picture(f, "kl-cellpic")}</button>`
+            : `<div class="kl-cell kl-locked" aria-hidden="true">❓</div>`).join("")}
+        </div>
+        <div class="kl-row"><button class="kl-btn kl-ok" aria-label="סגירה">✔️</button></div>`;
+      box.querySelectorAll(".kl-lvl[data-l]").forEach((b) => (b.onclick = () => { setLevel(b.dataset.l); draw(); }));
+      box.querySelector(".kl-autoVoice").onclick = () => { setAutoVoice(!autoVoice); draw(); };
+      box.querySelectorAll(".kl-cell[data-id]").forEach((b) => (b.onclick = () => {
+        // פותחים את הכרטיס מתוך האלבום, וחוזרים לאלבום כשסוגרים
+        const fact = facts.find((f) => f.id === b.dataset.id);
+        const { card, speak } = renderCard(fact, false);
+        card.querySelector(".kl-ok").onclick = () => { stopSpeaking(); card.replaceWith(box); };
+        box.replaceWith(card);
+        speak();
+      }));
+      box.querySelector(".kl-ok").onclick = closeOverlay;
+    };
+    draw();
+    opts.onOpen && opts.onOpen(null);
+    const p = openOverlay(box, () => opts.onClose && opts.onClose(null));
+    box.querySelector(".kl-ok").focus();
+    return p;
+  }
+
+  // ---------- כפתור הקראה 🗣️/🤐 (נפרד מ-🔊 של הצלילים) ----------
+  let voiceBtns = [];
+  function paintVoiceButtons() {
+    voiceBtns.forEach((b) => {
+      b.textContent = autoVoice ? "🗣️" : "🤐";
+      b.setAttribute("aria-label", autoVoice ? "כיבוי הקראה" : "הפעלת הקראה");
+      b.setAttribute("aria-pressed", String(!autoVoice));
+      b.classList.toggle("kl-off", !autoVoice);
+    });
+  }
+
+  function addVoiceButton(parent) {
+    const b = el("button", "kl-albumBtn kl-voiceBtn");
+    b.type = "button";
+    b.onclick = () => setAutoVoice(!autoVoice);
+    (parent || document.body).appendChild(b);
+    if (!parent) b.classList.add("kl-floating", "kl-floating-voice");
+    voiceBtns.push(b);
+    paintVoiceButtons();
+    return b;
+  }
+
+  function addAlbumButton(parent) {
+    // כפתור ההקראה מגיע אוטומטית לפני האלבום, כדי שיהיה בכל משחק.
+    // משחק שיש לו כפתור הקראה משלו: init({ voiceButton: false }) ומחברים אותו ל-setAutoVoice.
+    if (opts.voiceButton !== false && !voiceBtns.length) addVoiceButton(parent);
+    albumBtn = el("button", "kl-albumBtn");
+    albumBtn.setAttribute("aria-label", "אלבום גילויים");
+    albumBtn.innerHTML = '📖<span class="kl-count"></span>';
+    albumBtn.onclick = openAlbum;
+    (parent || document.body).appendChild(albumBtn);
+    if (!parent) albumBtn.classList.add("kl-floating");
+    updateAlbumBadge();
+    return albumBtn;
+  }
+
+  function updateAlbumBadge() {
+    if (albumBtn) albumBtn.querySelector(".kl-count").textContent = collected.size || "";
+  }
+
+  // ---------- מצב ----------
+  function collect(id) {
+    if (collected.has(id) || !facts.some((f) => f.id === id)) return false;
+    collected.add(id);
+    save(collectedKey(), [...collected]);
+    updateAlbumBadge();
+    return true;
+  }
+
+  function setAutoVoice(on) {
+    autoVoice = !!on;
+    save(VOICE_KEY, autoVoice);
+    if (!autoVoice) stopSpeaking();
+    paintVoiceButtons();
+  }
+
+  function setLevel(l) {
+    if (!LEVELS.includes(l)) return;
+    level = l;
+    save(LEVEL_KEY, l);
+  }
+
+  function init(options) {
+    opts = Object.assign({ lang: "he-IL", isMuted: null, onOpen: null, onClose: null, level: null, voiceButton: true }, options);
+    if (!opts.gameId) throw new Error("KidsLearn.init: gameId is required");
+    facts = (opts.facts || []).filter((f) => f && f.id);
+    collected = new Set(load(collectedKey(), []).filter((id) => facts.some((f) => f.id === id)));
+    // רמה: מה שההורה בחר באלבום (נשמר) > ברירת מחדל של המשחק > בינונית
+    level = load(LEVEL_KEY, null) || opts.level || "mid";
+    autoVoice = load(VOICE_KEY, true) !== false;
+    if (!LEVELS.includes(level)) level = "mid";
+    injectStyle();
+    if ("speechSynthesis" in window) {
+      pickVoice();
+      speechSynthesis.addEventListener("voiceschanged", pickVoice);
+    }
+    window.addEventListener("keydown", onKey, true);
+    // ההגדרה שונתה בלשונית/משחק אחר (localStorage משותף ב-file://)
+    window.addEventListener("storage", (e) => {
+      if (e.key !== VOICE_KEY) return;
+      autoVoice = load(VOICE_KEY, true) !== false;
+      if (!autoVoice) stopSpeaking();
+      paintVoiceButtons();
+    });
+    updateAlbumBadge();
+  }
+
+  // ---------- עיצוב (מוזרק, כדי שהמודול יהיה קובץ אחד) ----------
+  function injectStyle() {
+    if (document.getElementById("kidslearn-style")) return;
+    const s = document.createElement("style");
+    s.id = "kidslearn-style";
+    s.textContent = `
+.kl-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+  background:rgba(40,30,80,.55);padding:16px;direction:rtl;font-family:"Segoe UI",system-ui,sans-serif}
+.kl-card{background:#fffaf0;border-radius:28px;box-shadow:0 10px 40px rgba(0,0,0,.3);padding:24px 20px;
+  width:min(92vw,520px);max-height:92vh;overflow:auto;text-align:center;color:#2b2140;
+  animation:kl-pop .35s ease-out}
+.kl-badge{display:inline-block;background:#ffd60a;color:#5a3d00;font-weight:800;font-size:1.3rem;
+  padding:4px 16px;border-radius:999px;margin-bottom:8px}
+.kl-pic{font-size:6.5rem;line-height:1.1;margin:4px auto 8px;max-width:70%;max-height:220px;display:block;object-fit:contain}
+.kl-title{font-size:1.8rem;font-weight:800;margin-bottom:8px}
+.kl-text{font-size:1.7rem;line-height:1.45;font-weight:600;margin:4px 6px 18px}
+.kl-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.kl-btn{width:84px;height:84px;border-radius:50%;border:none;font-size:2.4rem;cursor:pointer;
+  background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.kl-btn.kl-ok{background:#8ee39b;width:100px;height:100px;font-size:3rem}
+.kl-btn:active,.kl-cell:active,.kl-lvl:active,.kl-albumBtn:active{transform:scale(.94)}
+.kl-btn:focus-visible,.kl-cell:focus-visible,.kl-lvl:focus-visible{outline:5px solid #6c5ce7;outline-offset:3px}
+.kl-levels{display:flex;gap:10px;justify-content:center;margin-bottom:14px}
+.kl-lvl{font-size:2rem;width:64px;height:64px;border-radius:18px;border:3px solid transparent;background:#fff;
+  cursor:pointer;opacity:.5;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.kl-lvl.on{opacity:1;border-color:#6c5ce7}
+.kl-sep{width:3px;border-radius:2px;background:#ddd;margin:6px 4px}
+.kl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:12px;margin-bottom:18px}
+.kl-cell{aspect-ratio:1;border-radius:20px;border:none;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.14);
+  display:flex;align-items:center;justify-content:center;font-size:3rem;cursor:pointer;padding:6px;overflow:hidden}
+.kl-cellpic{font-size:3.2rem;max-width:100%;max-height:100%;object-fit:contain}
+.kl-locked{background:#e8e4f3;color:#9b93b5;cursor:default;box-shadow:none}
+.kl-albumBtn{position:relative;font-size:2rem;width:60px;height:60px;border-radius:50%;border:none;background:#fff;
+  cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.15)}
+.kl-albumBtn.kl-floating{position:fixed;bottom:16px;left:16px;z-index:50}
+.kl-albumBtn.kl-floating-voice{left:86px}
+.kl-voiceBtn.kl-off{background:#e8e4f3}
+.kl-count{position:absolute;top:-6px;right:-6px;background:#ff6b6b;color:#fff;font-size:.95rem;font-weight:800;
+  min-width:26px;height:26px;line-height:26px;border-radius:13px;padding:0 6px}
+.kl-count:empty{display:none}
+@keyframes kl-pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.kl-card{animation:none}}
+@media (max-height:520px){.kl-pic{font-size:4rem;max-height:120px}.kl-text{font-size:1.35rem}}`;
+    document.head.appendChild(s);
+  }
+
+  window.KidsLearn = {
+    init,
+    show,
+    openAlbum,
+    addAlbumButton,
+    collect,
+    isCollected: (id) => collected.has(id),
+    say,
+    stopSpeaking,
+    setLevel,
+    getLevel: () => level,
+    setAutoVoice,
+    getAutoVoice: () => autoVoice,
+    addVoiceButton,
+    isOpen: () => !!openState,
+    progress: () => ({ count: collected.size, total: facts.length }),
+    close: closeOverlay,
+  };
+})();
+
+</script>
+  <script>
+// תוכן התחלתי: חבילות מילים + הגדרות ברירת מחדל.
+// כשהמשחק מתחבר לגיליון Google בפעם הראשונה, המילים האלה נכתבות ללשונית "📚 מילים",
+// ומשם ההורים מעדכנים. אחרי החיבור, הגיליון הוא המקור. הקובץ הזה נשאר רק כגיבוי למצב בלי אינטרנט.
+// emoji: אימוג'י אחד או שניים, או קישור לתמונה (https://...).
+const DEFAULT_SETTINGS = {
+  playerName: '',        // נקבע בגיליון (לא נשמר בקוד שעולה לאינטרנט)
+  house: 'gryffindor',   // gryffindor / slytherin / hufflepuff / ravenclaw
+  newPerMatch: 5,        // כמה מילים חדשות בכל משחק
+  playsPerHalf: 12,      // כמה מהלכים (התקפה/הגנה) בכל מחצית
+  keeperDog: 'ברטי',
+  fetchDog: 'סקאי',
+};
+
+const DEFAULT_WORDS = [
+  // ⚽ כדורגל
+  ['Football', 'ball', 'כדור', '⚽', 'I kick the ball.'],
+  ['Football', 'goal', 'שער', '🥅', 'He scores a goal!'],
+  ['Football', 'kick', 'לבעוט', '🦶⚽', 'Kick the ball!'],
+  ['Football', 'run', 'לרוץ', '🏃', 'I run fast.'],
+  ['Football', 'team', 'קבוצה', '👥', 'We are a team.'],
+  ['Football', 'cup', 'גביע', '🏆', 'We win the cup!'],
+  ['Football', 'win', 'לנצח', '🥇', 'We can win!'],
+  ['Football', 'fast', 'מהר', '💨', 'The dog is fast.'],
+  ['Football', 'shoe', 'נעל', '👟', 'My shoe is red.'],
+  ['Football', 'shirt', 'חולצה', '👕', 'This is my shirt.'],
+  // 🧙 קסם
+  ['Magic', 'owl', 'ינשוף', '🦉', 'The owl can fly.'],
+  ['Magic', 'cat', 'חתול', '🐱', 'The cat is black.'],
+  ['Magic', 'hat', 'כובע', '🎩', 'I have a big hat.'],
+  ['Magic', 'book', 'ספר', '📕', 'I read a book.'],
+  ['Magic', 'broom', 'מטאטא', '🧹', 'I fly on a broom.'],
+  ['Magic', 'castle', 'טירה', '🏰', 'The castle is big.'],
+  ['Magic', 'star', 'כוכב', '⭐', 'I see a star.'],
+  ['Magic', 'moon', 'ירח', '🌙', 'The moon is up.'],
+  ['Magic', 'key', 'מפתח', '🔑', 'This key opens the door.'],
+  ['Magic', 'magic', 'קסם', '✨', 'It is magic!'],
+  ['Magic', 'frog', 'צפרדע', '🐸', 'The frog can jump.'],
+  ['Magic', 'train', 'רכבת', '🚂', 'The train is red.'],
+  // 🐕 כלבים
+  ['Dogs', 'dog', 'כלב', '🐕', 'My dog is big.'],
+  ['Dogs', 'big', 'גדול', '🐘', 'The dog is big.'],
+  ['Dogs', 'small', 'קטן', '🐭', 'The mouse is small.'],
+  ['Dogs', 'bone', 'עצם', '🦴', 'The dog has a bone.'],
+  ['Dogs', 'sit', 'לשבת', '🪑', 'Sit down, please.'],
+  ['Dogs', 'play', 'לשחק', '🎾', "Let's play!"],
+  ['Dogs', 'walk', 'ללכת', '🚶', 'We walk the dog.'],
+  ['Dogs', 'sleep', 'לישון', '😴', 'The dog can sleep.'],
+  ['Dogs', 'happy', 'שמח', '😄', 'I am happy.'],
+  ['Dogs', 'eat', 'לאכול', '🍽️', 'I eat lunch.'],
+  // 🎨 צבעים
+  ['Colors', 'red', 'אדום', '🔴', 'The ball is red.'],
+  ['Colors', 'blue', 'כחול', '🔵', 'The sky is blue.'],
+  ['Colors', 'green', 'ירוק', '🟢', 'The grass is green.'],
+  ['Colors', 'yellow', 'צהוב', '🟡', 'The sun is yellow.'],
+  ['Colors', 'black', 'שחור', '⚫', 'My dog is black.'],
+  ['Colors', 'white', 'לבן', '⚪', 'The ball is white.'],
+  ['Colors', 'orange', 'כתום', '🟠', 'I like orange.'],
+  ['Colors', 'purple', 'סגול', '🟣', 'The hat is purple.'],
+  // 🔢 מספרים
+  ['Numbers', 'one', 'אחת', '1️⃣', 'I have one ball.'],
+  ['Numbers', 'two', 'שתיים', '2️⃣', 'I have two dogs.'],
+  ['Numbers', 'three', 'שלוש', '3️⃣', 'Three, two, one, go!'],
+  ['Numbers', 'four', 'ארבע', '4️⃣', 'A dog has four legs.'],
+  ['Numbers', 'five', 'חמש', '5️⃣', 'I am five.'],
+  ['Numbers', 'six', 'שש', '6️⃣', 'Six cats.'],
+  ['Numbers', 'seven', 'שבע', '7️⃣', 'Seven players.'],
+  ['Numbers', 'eight', 'שמונה', '8️⃣', 'I am eight.'],
+  ['Numbers', 'nine', 'תשע', '9️⃣', 'Nine stars.'],
+  ['Numbers', 'ten', 'עשר', '🔟', 'Ten goals!'],
+  // ✋ גוף
+  ['Body', 'hand', 'יד', '✋', 'Give me your hand.'],
+  ['Body', 'eye', 'עין', '👁️', 'I see with my eye.'],
+  ['Body', 'ear', 'אוזן', '👂', 'I hear with my ear.'],
+  ['Body', 'nose', 'אף', '👃', 'The dog has a big nose.'],
+  ['Body', 'mouth', 'פה', '👄', 'Open your mouth.'],
+  ['Body', 'tooth', 'שן', '🦷', 'I have a new tooth.'],
+  ['Body', 'arm', 'זרוע', '💪', 'My arm is strong.'],
+  // 🍎 אוכל
+  ['Food', 'apple', 'תפוח', '🍎', 'I eat an apple.'],
+  ['Food', 'banana', 'בננה', '🍌', 'The banana is yellow.'],
+  ['Food', 'milk', 'חלב', '🥛', 'I drink milk.'],
+  ['Food', 'water', 'מים', '💧', 'I drink water.'],
+  ['Food', 'pizza', 'פיצה', '🍕', 'I like pizza.'],
+  ['Food', 'cake', 'עוגה', '🎂', 'A big cake!'],
+  ['Food', 'egg', 'ביצה', '🥚', 'I eat an egg.'],
+  ['Food', 'bread', 'לחם', '🍞', 'I like bread.'],
+  ['Food', 'cookie', 'עוגייה', '🍪', 'The cookie is good.'],
+].map(([pack, en, he, emoji, sentence]) => ({ pack, en, he, emoji, sentence, active: true }));
+
+</script>
+  <script>
+// עובדות "הידעת?": כדורגל, עולם הארי פוטר (מה שכתוב בספרים) והכלבים. כל עובדה נבדקה, ראה context/learning-design.md
+const FACTS = [
+  {
+    id: 'eleven', emoji: '⚽', title: '11 שחקנים',
+    little: 'אחד עשר שחקנים!',
+    mid: 'בקבוצת כדורגל יש אחד עשר שחקנים על המגרש.',
+    big: 'בכל קבוצת כדורגל משחקים אחד עשר שחקנים על המגרש בבת אחת: שוער אחד ועשרה שחקני שדה.',
+  },
+  {
+    id: 'keeper-hands', emoji: '🧤', title: 'רק השוער',
+    little: 'השוער תופס ביד!',
+    mid: 'רק השוער מותר לגעת בכדור עם הידיים.',
+    big: 'השוער הוא השחקן היחיד שמותר לו לתפוס את הכדור בידיים, וגם זה רק בתוך רחבת העונשין שלו.',
+  },
+  {
+    id: 'ninety', emoji: '⏱️', title: '90 דקות',
+    little: 'שתי מחציות!',
+    mid: 'משחק כדורגל נמשך תשעים דקות, בשתי מחציות.',
+    big: 'משחק כדורגל רגיל נמשך תשעים דקות: שתי מחציות של ארבעים וחמש דקות, ובאמצע הפסקה של רבע שעה.',
+  },
+  {
+    id: 'penalty', emoji: '🥅', title: 'נקודת הפנדל',
+    little: 'פנדל!',
+    mid: 'בועטים פנדל מנקודה שנמצאת בערך 11 מטר מהשער.',
+    big: 'נקודת הפנדל נמצאת שתים עשרה יארד מקו השער, שזה בערך אחד עשר מטר. רק השוער מותר לעמוד בין הבועט לשער.',
+  },
+  {
+    id: 'world-cup', emoji: '🏆', title: 'המונדיאל',
+    little: 'גביע העולם!',
+    mid: 'גביע העולם בכדורגל נערך פעם בארבע שנים.',
+    big: 'גביע העולם בכדורגל, המונדיאל, נערך פעם בארבע שנים. נבחרות מכל העולם מתחרות, וברזיל זכתה בו הכי הרבה פעמים, חמש.',
+  },
+  {
+    id: 'quidditch-seven', emoji: '🧹', title: 'קווידיץ׳',
+    little: 'שבעה על מטאטאים!',
+    mid: 'בספרים, בקבוצת קווידיץ׳ יש שבעה שחקנים על מטאטאים.',
+    big: 'בספרי הארי פוטר, בקבוצת קווידיץ׳ יש שבעה שחקנים: שלושה שמבקיעים שערים, שניים שהודפים את המרביצים עם מחבט, שוער אחד ומחפש אחד.',
+  },
+  {
+    id: 'four-balls', emoji: '🔴', title: 'ארבעה כדורים',
+    little: 'ארבעה כדורים!',
+    mid: 'בקווידיץ׳ משחקים עם ארבעה כדורים בבת אחת.',
+    big: 'בקווידיץ׳ יש ארבעה כדורים: הקוואפל האדום שמבקיעים איתו, שני מרביצים שעפים לבד, והסניץ׳ הזהב הקטן.',
+  },
+  {
+    id: 'snitch', emoji: '✨', title: 'הסניץ׳ הזהב',
+    little: 'סניץ׳ זהב!',
+    mid: 'מי שתופס את הסניץ׳ מקבל מאה וחמישים נקודות.',
+    big: 'בספרים, המחפש שתופס את הסניץ׳ הזהב מקבל לקבוצה מאה וחמישים נקודות, והמשחק נגמר מיד.',
+  },
+  {
+    id: 'youngest-seeker', emoji: '⚡', title: 'המחפש הצעיר',
+    little: 'הארי בשנה הראשונה!',
+    mid: 'הארי נבחר למחפש כבר בשנה הראשונה שלו בהוגוורטס.',
+    big: 'הארי היה השחקן הצעיר ביותר בקבוצת בית בהוגוורטס מזה כמאה שנה. בדרך כלל תלמידי שנה ראשונה לא משחקים בכלל.',
+  },
+  {
+    id: 'four-houses', emoji: '🏰', title: 'ארבעה בתים',
+    little: 'ארבעה בתים!',
+    mid: 'בהוגוורטס יש ארבעה בתים, וכל אחד קיבל את השם של מי שייסד אותו.',
+    big: 'גריפינדור, הפלפאף, רייבנקלו וסלית׳רין נקראים על שם ארבעת המייסדים של הוגוורטס. בכל שנה הבתים מתחרים על גביע הבתים.',
+  },
+  {
+    id: 'platform', emoji: '🚂', title: 'רציף 9¾',
+    little: 'רכבת אדומה!',
+    mid: 'הרכבת להוגוורטס יוצאת מרציף תשע ושלושה רבעים.',
+    big: 'בספרים, הרכבת להוגוורטס יוצאת מתחנת קינגס קרוס בלונדון, מרציף תשע ושלושה רבעים. עוברים אליו דרך קיר!',
+  },
+  {
+    id: 'hedwig', emoji: '🦉', title: 'הדוויג',
+    little: 'ינשוף לבן!',
+    mid: 'הדוויג, הינשופה של הארי, היא ינשוף שלג לבן.',
+    big: 'הדוויג היא ינשוף שלג. ינשופי שלג גרים בצפון הקר של העולם, והנוצות הלבנות עוזרות להם להסתתר בשלג.',
+  },
+  {
+    id: 'cane-corso', emoji: '🐕‍🦺', title: 'קנה קורסו',
+    little: 'כלב גדול!',
+    mid: 'קנה קורסו הוא גזע כלבים גדול שמגיע מאיטליה.',
+    big: 'קנה קורסו הוא גזע כלבים גדול וחזק מאיטליה. במשך מאות שנים הכלבים האלה עזרו לשמור על חוות ועל בעלי חיים.',
+  },
+  {
+    id: 'husky', emoji: '🐺', title: 'האסקי',
+    little: 'עיניים כחולות!',
+    mid: 'להרבה כלבי האסקי יש עיניים כחולות, ולפעמים עין אחת מכל צבע.',
+    big: 'האסקי הסיבירי גודל למשוך מזחלות בשלג. להרבה מהם יש עיניים כחולות, ולחלק עין אחת כחולה ועין אחת חומה.',
+  },
+];
+
+</script>
+  <script>
+// חיבור לגיליון Google של ההורים (Apps Script web app). בלי חיבור — הכול עובד מקומית.
+// הקישור נשמר רק במכשיר (localStorage), לא בקוד שעולה לאינטרנט.
+// אפשר לחבר מכשיר גם בקישור: <כתובת המשחק>#connect=<קישור הסקריפט>
+const Sheet = (() => {
+  const URL_KEY = 'hogcup:sheetUrl';
+  let url = '';
+  try { url = localStorage.getItem(URL_KEY) || ''; } catch (e) {}
+
+  const valid = (u) => /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec/.test((u || '').trim());
+
+  function setUrl(u) {
+    url = (u || '').trim();
+    try { url ? localStorage.setItem(URL_KEY, url) : localStorage.removeItem(URL_KEY); } catch (e) {}
+  }
+
+  function readHash() {
+    const m = location.hash.match(/connect=([^&]+)/);
+    if (!m) return false;
+    const u = decodeURIComponent(m[1]);
+    history.replaceState(null, '', location.pathname + location.search);
+    if (!valid(u)) return false;
+    setUrl(u);
+    return true;
+  }
+
+  async function call(opts, ms) {
+    const c = new AbortController();
+    const t = setTimeout(() => c.abort(), ms);
+    try {
+      const target = opts.method === 'POST' ? url : url + (url.includes('?') ? '&' : '?') + 'a=pull&t=' + Date.now();
+      // בלי Content-Type: נשלח כ-text/plain, כך שאין preflight ו-Apps Script מקבל את הבקשה
+      const r = await fetch(target, { ...opts, signal: c.signal, redirect: 'follow' });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || 'sheet error');
+      return j;
+    } finally {
+      clearTimeout(t);
+    }
+  }
+
+  const pull = () => call({ method: 'GET' }, 15000);
+  const post = (body) => call({ method: 'POST', body: JSON.stringify(body) }, 20000);
+
+  return {
+    get url() { return url; },
+    get connected() { return valid(url); },
+    valid, setUrl, readHash, pull,
+    seed: (words) => post({ a: 'seed', words }),
+    push: (state, session) => post({ a: 'push', state, session }),
+  };
+})();
+
+</script>
+  <script>
+// עולם התלת-ממד: מגרש קסום מול טירת הוגוורטס, דמויות קוביות בסגנון רובלוקס, ברטי וסקאי.
+// three.js r128 (סקריפט רגיל). כל אנימציה היא tween שמחזיר Promise, כך ש-game.js כותב רצפים עם await.
+// כיוונים: שער היריב ב-z=-40 (מתקפה), השער שלנו ב-z=+40 (הגנה). דמות "מסתכלת" לכיוון +z המקומי שלה.
+const Pitch = (() => {
+  'use strict';
+  const T = THREE;
+  const GW = 7.6, GH = 2.6, GD = 1.8, BALL_R = 0.3;
+  const ATK_Z = -40, OWN_Z = 40;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  const HOUSES = {
+    gryffindor: { main: 0x9c1c1c, trim: 0xf0b429 },
+    slytherin: { main: 0x1f6b3a, trim: 0xc0c6cc },
+    hufflepuff: { main: 0xf2c230, trim: 0x2a2a2a },
+    ravenclaw: { main: 0x1d3f8f, trim: 0xb08d57 },
+    durmstrang: { main: 0x6b1d2a, trim: 0xc9a227 },
+  };
+
+  let renderer, scene, camera, container;
+  let fx = () => {};
+  let paused = false, view = 'menu', clockT = 0;
+  const tweens = [];
+  const blobs = [];
+  const camCur = { pos: new T.Vector3(0, 14, 30), look: new T.Vector3(0, 0, 0) };
+
+  // ---------- tweens ----------
+  const ease = {
+    lin: (t) => t,
+    out: (t) => 1 - (1 - t) * (1 - t),
+    in: (t) => t * t,
+    io: (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2),
+  };
+  function tween(dur, fn, e = ease.io) {
+    return new Promise((res) => tweens.push({ t: 0, dur: Math.max(0.001, dur), fn, e, res }));
+  }
+  const wait = (s) => tween(s, () => {});
+  function stepTweens(dt) {
+    for (let i = tweens.length - 1; i >= 0; i--) {
+      const w = tweens[i];
+      w.t += dt;
+      const k = Math.min(1, w.t / w.dur);
+      w.fn(w.e(k), k);
+      if (k >= 1) { tweens.splice(i, 1); w.res(); }
+    }
+  }
+
+  // ---------- חומרים וטקסטורות ----------
+  const matCache = {};
+  const mat = (c) => matCache[c] || (matCache[c] = new T.MeshLambertMaterial({ color: c }));
+  function canvasTex(w, h, draw) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    const t = new T.CanvasTexture(c);
+    t.anisotropy = 4;
+    return t;
+  }
+  const hex = (n) => '#' + n.toString(16).padStart(6, '0');
+
+  function faceMat(skin, { glasses = false, eyes = '#1d1d1d' } = {}) {
+    return new T.MeshLambertMaterial({
+      map: canvasTex(64, 64, (g) => {
+        g.fillStyle = hex(skin); g.fillRect(0, 0, 64, 64);
+        g.fillStyle = eyes; g.fillRect(17, 24, 8, 10); g.fillRect(39, 24, 8, 10);
+        g.fillStyle = '#fff'; g.fillRect(19, 25, 3, 3); g.fillRect(41, 25, 3, 3);
+        g.strokeStyle = '#1d1d1d'; g.lineWidth = 3.5;
+        g.beginPath(); g.arc(32, 38, 11, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+        if (glasses) {
+          g.lineWidth = 2.5;
+          g.beginPath(); g.arc(21, 29, 8, 0, 7); g.stroke();
+          g.beginPath(); g.arc(43, 29, 8, 0, 7); g.stroke();
+          g.beginPath(); g.moveTo(29, 29); g.lineTo(35, 29); g.stroke();
+        }
+      }),
+    });
+  }
+  function backMat(color, trim, num) {
+    return new T.MeshLambertMaterial({
+      map: canvasTex(64, 64, (g) => {
+        g.fillStyle = hex(color); g.fillRect(0, 0, 64, 64);
+        g.fillStyle = hex(trim); g.font = 'bold 28px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillText(num, 32, 36);
+      }),
+    });
+  }
+
+  function box(w, h, d, color, x = 0, y = 0, z = 0) {
+    const m = new T.Mesh(new T.BoxGeometry(w, h, d), typeof color === 'number' ? mat(color) : color);
+    m.position.set(x, y, z);
+    return m;
+  }
+  function pivot(parent, x, y, z) {
+    const p = new T.Group();
+    p.position.set(x, y, z);
+    parent.add(p);
+    return p;
+  }
+
+  // ---------- דמות קוביות ----------
+  function person({ shirt, trim, shorts = 0xffffff, skin = 0xf1c27d, hair = 0x3b2a1a, num = '10', glasses = false }) {
+    const g = new T.Group();
+    const u = (g.userData = { kind: 'person', run: 0, phase: 0, skin, shirt, trim });
+    const legL = pivot(g, -0.22, 0.95, 0), legR = pivot(g, 0.22, 0.95, 0);
+    [legL, legR].forEach((p) => {
+      p.add(box(0.4, 0.5, 0.4, shorts, 0, -0.25, 0));
+      p.add(box(0.38, 0.45, 0.38, skin, 0, -0.68, 0));
+      const boot = box(0.42, 0.18, 0.55, 0x222222, 0, -0.9, 0.06);
+      p.add(boot);
+      p.userData.boot = boot;
+    });
+    const torso = new T.Mesh(new T.BoxGeometry(0.95, 0.95, 0.5), [mat(shirt), mat(shirt), mat(trim), mat(shirt), mat(shirt), backMat(shirt, trim, num)]);
+    torso.position.y = 1.42;
+    g.add(torso);
+    const armL = pivot(g, -0.68, 1.82, 0), armR = pivot(g, 0.68, 1.82, 0);
+    [armL, armR].forEach((p) => {
+      p.add(box(0.38, 0.35, 0.38, shirt, 0, -0.15, 0));
+      p.add(box(0.34, 0.6, 0.34, skin, 0, -0.6, 0));
+    });
+    const headP = pivot(g, 0, 2.28, 0);
+    const skinM = mat(skin);
+    const head = new T.Mesh(new T.BoxGeometry(0.78, 0.78, 0.78), [skinM, skinM, skinM, skinM, faceMat(skin, { glasses }), skinM]);
+    headP.add(head);
+    headP.add(box(0.84, 0.22, 0.84, hair, 0, 0.42, -0.02));
+    headP.add(box(0.84, 0.5, 0.2, hair, 0, 0.15, -0.34));
+    const hatSlot = pivot(headP, 0, 0.5, 0);
+    const capeSlot = pivot(g, 0, 1.85, -0.27);
+    Object.assign(u, { legL, legR, armL, armR, head, headP, torso, hatSlot, capeSlot });
+    addBlob(g, 0.7);
+    return g;
+  }
+
+  function setGlasses(p, on) {
+    p.userData.head.material[4] = faceMat(p.userData.skin, { glasses: on });
+  }
+
+  // ---------- כלב קוביות ----------
+  function dog({ body, belly = null, face = null, eye = 0x2b1a0e, ears = 'flop', tail = 'straight', s = 1 }) {
+    const g = new T.Group();
+    const inner = new T.Group();
+    inner.scale.setScalar(s);
+    g.add(inner);
+    const u = (g.userData = { kind: 'dog', run: 0, phase: 0, inner, s });
+    inner.add(box(0.75, 0.7, 1.6, body, 0, 0.88, 0));
+    if (belly) inner.add(box(0.7, 0.2, 1.4, belly, 0, 0.58, 0));
+    const legs = [[-0.24, 0.55], [0.24, 0.55], [-0.24, -0.55], [0.24, -0.55]].map(([x, z]) => {
+      const p = pivot(inner, x, 0.62, z);
+      p.add(box(0.24, 0.62, 0.24, body, 0, -0.31, 0));
+      if (belly) p.add(box(0.25, 0.14, 0.25, belly, 0, -0.56, 0));
+      return p;
+    });
+    const headP = pivot(inner, 0, 1.28, 0.85);
+    headP.add(box(0.62, 0.56, 0.6, body, 0, 0, 0));
+    if (face) headP.add(box(0.5, 0.3, 0.05, face, 0, -0.08, 0.3));
+    headP.add(box(0.38, 0.28, 0.38, face || body, 0, -0.12, 0.42));
+    headP.add(box(0.16, 0.12, 0.08, 0x111111, 0, -0.04, 0.62));
+    const jaw = box(0.32, 0.08, 0.3, 0xc0505a, 0, -0.27, 0.4);
+    headP.add(jaw);
+    [-0.16, 0.16].forEach((x) => {
+      headP.add(box(0.11, 0.11, 0.04, eye, x, 0.1, 0.31));
+      headP.add(box(0.04, 0.04, 0.02, 0xffffff, x + 0.02, 0.13, 0.335));
+    });
+    if (ears === 'up') {
+      [-0.2, 0.2].forEach((x) => {
+        const e = new T.Mesh(new T.ConeGeometry(0.13, 0.32, 4), mat(body));
+        e.position.set(x, 0.42, -0.05); e.rotation.y = Math.PI / 4;
+        headP.add(e);
+      });
+    } else {
+      [-0.33, 0.33].forEach((x) => {
+        const e = box(0.08, 0.26, 0.2, body, x, 0.12, 0);
+        e.rotation.z = x > 0 ? -0.35 : 0.35;
+        headP.add(e);
+      });
+    }
+    const tailP = pivot(inner, 0, 1.05, -0.8);
+    if (tail === 'curl') {
+      const t = new T.Mesh(new T.TorusGeometry(0.22, 0.09, 6, 10, Math.PI * 1.4), mat(body));
+      t.rotation.y = Math.PI / 2; t.position.set(0, 0.22, -0.05);
+      tailP.add(t);
+      if (belly) { const tip = box(0.16, 0.16, 0.16, belly, 0, 0.42, 0.12); tailP.add(tip); }
+    } else {
+      const t = box(0.12, 0.12, 0.55, body, 0, 0.12, -0.22);
+      t.rotation.x = -0.6;
+      tailP.add(t);
+    }
+    const mouth = pivot(headP, 0, -0.18, 0.68);
+    const neck = pivot(inner, 0, 1.12, 0.62);
+    Object.assign(u, { legs, headP, tailP, jaw, mouth, neck });
+    addBlob(g, 0.85 * s);
+    return g;
+  }
+
+  // ---------- צל עגול מתחת לדמויות ----------
+  const blobMat = new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false });
+  function addBlob(obj, r) {
+    const m = new T.Mesh(new T.CircleGeometry(r, 16), blobMat);
+    m.rotation.x = -Math.PI / 2;
+    blobs.push({ obj, m });
+  }
+
+  // ---------- כדור ----------
+  const ballSkins = {};
+  function makeBallSkins() {
+    ballSkins.classic = new T.MeshLambertMaterial({
+      map: canvasTex(256, 128, (g) => {
+        g.fillStyle = '#fff'; g.fillRect(0, 0, 256, 128);
+        g.fillStyle = '#1b1b1b';
+        const spots = [[32, 30], [96, 30], [160, 30], [224, 30], [0, 92], [64, 92], [128, 92], [192, 92], [256, 92], [64, 0], [192, 0], [0, 128], [128, 128]];
+        spots.forEach(([x, y]) => { g.beginPath(); for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2 - Math.PI / 2; g.lineTo(x + Math.cos(a) * 15, y + Math.sin(a) * 13); } g.fill(); });
+      }),
+    });
+    ballSkins.quaffle = new T.MeshLambertMaterial({
+      map: canvasTex(128, 64, (g) => {
+        g.fillStyle = '#c8322b'; g.fillRect(0, 0, 128, 64);
+        g.strokeStyle = '#7d1b16'; g.lineWidth = 3;
+        for (let x = 8; x < 128; x += 20) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 64); g.stroke(); }
+      }),
+    });
+    ballSkins.snitch = new T.MeshLambertMaterial({ color: 0xf5c542, emissive: 0x6b4a00 });
+  }
+  let ball, ballWings, ballGlow;
+  const ballState = { holder: null, skin: 'classic' };
+  function makeBall() {
+    ball = new T.Mesh(new T.SphereGeometry(BALL_R, 18, 12), ballSkins.classic);
+    ballWings = new T.Group();
+    const wingM = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, side: T.DoubleSide });
+    [-1, 1].forEach((s) => {
+      const w = new T.Mesh(new T.PlaneGeometry(0.55, 0.22), wingM);
+      w.position.set(s * 0.4, 0.08, 0); w.rotation.z = s * 0.3;
+      ballWings.add(w);
+    });
+    ballWings.visible = false;
+    ball.add(ballWings);
+    ballGlow = new T.Mesh(new T.SphereGeometry(BALL_R * 1.9, 16, 12), new T.MeshBasicMaterial({ color: 0xffd35a, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending }));
+    ball.add(ballGlow);
+    addBlob(ball, 0.32);
+    scene.add(ball);
+  }
+  function setBallSkin(id) {
+    ballState.skin = ballSkins[id] ? id : 'classic';
+    ball.material = ballSkins[ballState.skin];
+    ballWings.visible = ballState.skin === 'snitch';
+  }
+  const lastBall = new T.Vector3();
+  function rollBall() {
+    const d = ball.position.clone().sub(lastBall);
+    d.y = 0;
+    const len = d.length();
+    if (len > 0.0001 && len < 3) {
+      const axis = new T.Vector3(d.z, 0, -d.x).normalize();
+      ball.rotateOnWorldAxis(axis, len / BALL_R);
+    }
+    lastBall.copy(ball.position);
+  }
+
+  // ---------- חלקיקים (קונפטי וניצוצות) ----------
+  const parts = [];
+  let partGeo;
+  function burst(pos, colors, n = 40, speed = 7) {
+    for (let i = 0; i < n; i++) {
+      const m = new T.Mesh(partGeo, new T.MeshBasicMaterial({ color: colors[i % colors.length], side: T.DoubleSide }));
+      m.position.copy(pos);
+      scene.add(m);
+      parts.push({ m, v: new T.Vector3(rand(-1, 1) * speed * 0.6, rand(0.4, 1.2) * speed, rand(-1, 1) * speed * 0.6), life: rand(1.2, 2.2), spin: rand(4, 10) });
+    }
+  }
+  function stepParts(dt) {
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i];
+      p.life -= dt;
+      p.v.y -= 9 * dt;
+      p.v.multiplyScalar(0.985);
+      p.m.position.addScaledVector(p.v, dt);
+      p.m.rotation.x += p.spin * dt; p.m.rotation.y += p.spin * 0.7 * dt;
+      if (p.life <= 0 || p.m.position.y < 0) { scene.remove(p.m); p.m.material.dispose(); parts.splice(i, 1); }
+    }
+  }
+
+  // ---------- המגרש ----------
+  function buildField() {
+    const tex = canvasTex(1024, 2048, (g, w, h) => {
+      const X = (x) => ((x + 30) / 60) * w, Z = (z) => ((z + 52) / 104) * h, S = (v) => (v / 60) * w;
+      for (let i = 0; i < 13; i++) { g.fillStyle = i % 2 ? '#2e7a2b' : '#358a31'; g.fillRect(0, Z(-52 + i * 8), w, Z(8) - Z(0) + 1); }
+      g.strokeStyle = 'rgba(255,255,255,0.92)'; g.lineWidth = S(0.18);
+      const line = (x1, z1, x2, z2) => { g.beginPath(); g.moveTo(X(x1), Z(z1)); g.lineTo(X(x2), Z(z2)); g.stroke(); };
+      const rect = (x1, z1, x2, z2) => { line(x1, z1, x2, z1); line(x2, z1, x2, z2); line(x2, z2, x1, z2); line(x1, z2, x1, z1); };
+      rect(-25, -40, 25, 40);
+      line(-25, 0, 25, 0);
+      const circ = (x, z, r, a0 = 0, a1 = Math.PI * 2) => { g.beginPath(); g.ellipse(X(x), Z(z), S(r), (r / 104) * h, 0, a0, a1); g.stroke(); };
+      circ(0, 0, 9.15);
+      [-1, 1].forEach((s) => {
+        rect(-16.5, s * 40, 16.5, s * (40 - 16.5));
+        rect(-9.2, s * 40, 9.2, s * (40 - 5.5));
+        g.fillStyle = '#fff';
+        g.beginPath(); g.ellipse(X(0), Z(s * 29), S(0.3), (0.3 / 104) * h, 0, 0, 7); g.fill();
+      });
+      g.beginPath(); g.ellipse(X(0), Z(0), S(0.3), (0.3 / 104) * h, 0, 0, 7); g.fill();
+    });
+    const field = new T.Mesh(new T.PlaneGeometry(60, 104), new T.MeshLambertMaterial({ map: tex }));
+    field.rotation.x = -Math.PI / 2;
+    scene.add(field);
+    const ground = new T.Mesh(new T.PlaneGeometry(600, 600), mat(0x3f7a35));
+    ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02;
+    scene.add(ground);
+  }
+
+  const nets = {};
+  function buildGoal(z, key) {
+    const g = new T.Group();
+    g.position.z = z;
+    if (z < 0) g.rotation.y = Math.PI;
+    const postM = mat(0xffffff);
+    const r = 0.09;
+    [-GW / 2, GW / 2].forEach((x) => { const p = new T.Mesh(new T.CylinderGeometry(r, r, GH, 10), postM); p.position.set(x, GH / 2, 0); g.add(p); });
+    const bar = new T.Mesh(new T.CylinderGeometry(r, r, GW + r * 2, 10), postM);
+    bar.rotation.z = Math.PI / 2; bar.position.set(0, GH, 0); g.add(bar);
+    const net = new T.Group();
+    const pts = [];
+    const step = 0.4;
+    for (let x = -GW / 2; x <= GW / 2 + 0.01; x += step) { pts.push(x, 0, GD, x, GH, GD); pts.push(x, GH, 0, x, GH, GD); }
+    for (let y = 0; y <= GH + 0.01; y += step) { pts.push(-GW / 2, y, GD, GW / 2, y, GD); [-GW / 2, GW / 2].forEach((x) => pts.push(x, y, 0, x, y, GD)); }
+    for (let d = 0; d <= GD + 0.01; d += step) { pts.push(-GW / 2, GH, d, GW / 2, GH, d); [-GW / 2, GW / 2].forEach((x) => pts.push(x, 0, d, x, GH, d)); }
+    const geo = new T.BufferGeometry();
+    geo.setAttribute('position', new T.Float32BufferAttribute(pts, 3));
+    net.add(new T.LineSegments(geo, new T.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 })));
+    g.add(net);
+    nets[key] = net;
+    scene.add(g);
+  }
+  function bulge(key) {
+    const n = nets[key];
+    return tween(0.6, (t) => { n.scale.z = 1 + Math.sin(t * Math.PI) * 0.45; n.scale.x = 1 + Math.sin(t * Math.PI) * 0.04; }, ease.lin);
+  }
+
+  function buildStands() {
+    const colors = Object.values(HOUSES).slice(0, 4).flatMap((h) => [h.main, h.trim]);
+    const perRow = 70, rows = 4, total = perRow * rows * 2;
+    const bodyGeo = new T.BoxGeometry(0.62, 0.8, 0.5), headGeo = new T.BoxGeometry(0.42, 0.42, 0.42);
+    const bodies = new T.InstancedMesh(bodyGeo, new T.MeshLambertMaterial({ color: 0xffffff }), total);
+    const heads = new T.InstancedMesh(headGeo, new T.MeshLambertMaterial({ color: 0xffffff }), total);
+    const skins = [0xf1c27d, 0xe0ac69, 0xc68642, 0x8d5524, 0xffdbac];
+    const m4 = new T.Matrix4(), col = new T.Color();
+    let i = 0;
+    [-1, 1].forEach((side) => {
+      for (let r = 0; r < rows; r++) {
+        const x = side * (31 + r * 1.6), y = 0.8 + r * 1.1;
+        const step = box(1.6, 0.4, 84, 0x9aa3ad, x, y - 0.6, 0);
+        scene.add(step);
+        for (let k = 0; k < perRow; k++) {
+          const z = -38 + (k / (perRow - 1)) * 76 + rand(-0.2, 0.2);
+          m4.makeTranslation(x, y, z); bodies.setMatrixAt(i, m4);
+          m4.makeTranslation(x, y + 0.62, z); heads.setMatrixAt(i, m4);
+          bodies.setColorAt(i, col.setHex(colors[Math.floor(Math.random() * colors.length)]));
+          heads.setColorAt(i, col.setHex(skins[Math.floor(Math.random() * skins.length)]));
+          i++;
+        }
+      }
+      for (let k = 0; k < 6; k++) {
+        const h = Object.values(HOUSES)[k % 4];
+        const z = -35 + k * 14;
+        scene.add(box(0.15, 9, 0.15, 0x6b5844, side * 38, 4.5, z));
+        const flag = box(0.05, 2.2, 3, h.main, side * 38, 7.6, z + 1.5);
+        flag.add(box(0.06, 0.4, 3, h.trim, 0, -0.9, 0));
+        scene.add(flag);
+      }
+    });
+    const crowd = new T.Group();
+    crowd.add(bodies, heads);
+    scene.add(crowd);
+    return crowd;
+  }
+
+  function buildCastle() {
+    const g = new T.Group();
+    g.position.set(0, 0, -125);
+    const stone = 0x9b9187, dark = 0x7d746b, roof = 0x2b3a67;
+    const win = new T.MeshBasicMaterial({ color: 0xffd36b });
+    g.add(box(70, 3, 30, 0x6f8f5a, 0, 1.5, 0));
+    g.add(box(46, 16, 12, stone, 0, 11, 0));
+    g.add(box(18, 24, 14, dark, -8, 15, -6));
+    const tower = (x, z, r, h) => {
+      const t = new T.Mesh(new T.CylinderGeometry(r, r * 1.08, h, 10), mat(stone));
+      t.position.set(x, 3 + h / 2, z); g.add(t);
+      const c = new T.Mesh(new T.ConeGeometry(r * 1.35, r * 3.2, 10), mat(roof));
+      c.position.set(x, 3 + h + r * 1.6, z); g.add(c);
+      for (let k = 0; k < 3; k++) { const w = new T.Mesh(new T.PlaneGeometry(0.9, 1.6), win); w.position.set(x, 6 + k * (h / 3.5), z + r + 0.05); g.add(w); }
+    };
+    tower(-26, 2, 3.2, 26); tower(26, 2, 3.2, 22); tower(-12, -8, 2.6, 34); tower(10, -6, 3.6, 30); tower(2, 6, 2.2, 20); tower(18, -14, 2.4, 38);
+    for (let x = -20; x <= 20; x += 4) for (let y = 7; y <= 15; y += 4) { const w = new T.Mesh(new T.PlaneGeometry(1.1, 1.8), win); w.position.set(x, y, 6.05); g.add(w); }
+    scene.add(g);
+    [[-90, -190, 40, 55], [-30, -210, 48, 70], [40, -200, 44, 62], [100, -185, 36, 50], [-150, -160, 30, 40], [150, -165, 30, 44]].forEach(([x, z, r, h]) => {
+      const m = new T.Mesh(new T.ConeGeometry(r, h, 6), mat(0x4f7350));
+      m.position.set(x, h / 2 - 1, z); scene.add(m);
+    });
+  }
+
+  const candles = [];
+  function buildCandles() {
+    const wax = mat(0xfff4dc), flame = new T.MeshBasicMaterial({ color: 0xffb43a });
+    for (let i = 0; i < 26; i++) {
+      const c = new T.Group();
+      c.add(box(0.22, 0.7, 0.22, wax, 0, 0, 0));
+      c.add(box(0.12, 0.2, 0.12, flame, 0, 0.45, 0));
+      c.position.set(rand(-22, 22), rand(8, 13), rand(-36, 36));
+      c.userData.ph = rand(0, 6);
+      scene.add(c);
+      candles.push(c);
+    }
+  }
+  function buildClouds() {
+    for (let i = 0; i < 9; i++) {
+      const c = new T.Group();
+      const n = 3 + Math.floor(rand(0, 3));
+      for (let k = 0; k < n; k++) c.add(box(rand(6, 12), rand(2, 4), rand(4, 8), 0xffffff, k * 5 - n * 2.5, rand(-1, 1), rand(-2, 2)));
+      c.position.set(rand(-160, 160), rand(45, 70), rand(-220, -60));
+      scene.add(c);
+    }
+  }
+
+  // ---------- שחקנים ----------
+  let hero, keeper, striker, berti, sky, crowd;
+  const cos = {};
+  const house = { home: 'gryffindor', away: 'slytherin' };
+
+  function teamPerson(houseId, opts = {}) {
+    const h = HOUSES[houseId];
+    return person({ shirt: h.main, trim: h.trim, shorts: h.trim === 0x2a2a2a ? 0x2a2a2a : 0xffffff, ...opts });
+  }
+
+  function rebuildHero() {
+    const pos = hero ? hero.position.clone() : new T.Vector3();
+    const rot = hero ? hero.rotation.y : 0;
+    if (hero) scene.remove(hero), removeBlob(hero);
+    hero = teamPerson(house.home, { hair: 0x4a2f1b, glasses: !!cos.glasses });
+    hero.position.copy(pos); hero.rotation.y = rot;
+    const u = hero.userData;
+    const boot = cos.boots === 'gold' ? 0xf5c542 : cos.boots === 'rainbow' ? null : 0x222222;
+    [u.legL, u.legR].forEach((l, i) => {
+      l.userData.boot.material = boot === null ? mat([0xff4d6d, 0x4dabff][i]) : mat(boot);
+    });
+    if (cos.hat) {
+      const hat = new T.Group();
+      hat.add(new T.Mesh(new T.CylinderGeometry(0.62, 0.62, 0.06, 12), mat(0x3d2a6b)));
+      const cone = new T.Mesh(new T.ConeGeometry(0.42, 1.0, 12), mat(0x3d2a6b));
+      cone.position.y = 0.5; cone.rotation.z = 0.15; hat.add(cone);
+      const star = box(0.14, 0.14, 0.04, 0xffd35a, 0.05, 0.45, 0.32); star.rotation.z = 0.78; hat.add(star);
+      u.hatSlot.add(hat);
+    }
+    if (cos.cape) {
+      const cape = box(1.0, 1.5, 0.06, HOUSES[house.home].main, 0, -0.72, -0.04);
+      cape.add(box(1.02, 0.12, 0.07, HOUSES[house.home].trim, 0, 0.7, 0));
+      u.capeSlot.add(cape);
+      u.capeSlot.rotation.x = 0.12;
+    }
+    scene.add(hero);
+  }
+  function removeBlob(obj) {
+    const i = blobs.findIndex((b) => b.obj === obj);
+    if (i >= 0) { scene.remove(blobs[i].m); blobs.splice(i, 1); }
+  }
+
+  function dressDogs() {
+    [berti, sky].forEach((d) => { const n = d.userData.neck; while (n.children.length) n.remove(n.children[0]); });
+    const collar = (d, color) => {
+      const c = new T.Mesh(new T.TorusGeometry(0.34, 0.06, 6, 14), mat(color));
+      c.rotation.x = Math.PI / 2 - 0.4;
+      d.userData.neck.add(c);
+    };
+    collar(berti, cos.bertiCollar ? 0xf5c542 : 0xc0392b);
+    collar(sky, 0x2e86de);
+    if (cos.bertiScarf) {
+      const h = HOUSES[house.home];
+      const s = box(0.78, 0.18, 0.5, h.main, 0, -0.02, 0.05); s.rotation.x = -0.4;
+      s.add(box(0.79, 0.07, 0.51, h.trim, 0, 0, 0));
+      berti.userData.neck.add(s);
+    }
+    if (cos.skyBandana) {
+      const b = new T.Mesh(new T.ConeGeometry(0.32, 0.45, 3), mat(0xe74c3c));
+      b.rotation.x = Math.PI; b.position.set(0, -0.22, 0.2);
+      sky.userData.neck.add(b);
+    }
+    if (cos.skyCrown) {
+      const c = new T.Mesh(new T.CylinderGeometry(0.2, 0.17, 0.16, 6, 1, true), new T.MeshLambertMaterial({ color: 0xf5c542, side: T.DoubleSide }));
+      c.position.set(0, 0.36, 0);
+      sky.userData.headP.add(c);
+      sky.userData.crown = c;
+    } else if (sky.userData.crown) {
+      sky.userData.headP.remove(sky.userData.crown); sky.userData.crown = null;
+    }
+  }
+
+  function buildActors() {
+    rebuildHero();
+    keeper = teamPerson(house.away, { num: '1', hair: 0x1b1b1b, skin: 0xe0ac69 });
+    striker = teamPerson(house.away, { num: '9', hair: 0x6b4423, skin: 0xffdbac });
+    berti = dog({ body: 0x232327, eye: 0x6b4a2a, ears: 'flop', tail: 'straight', s: 1.3 });
+    sky = dog({ body: 0x7d8794, belly: 0xf4f4f4, face: 0xf4f4f4, eye: 0x3fa9ff, ears: 'up', tail: 'curl', s: 1.0 });
+    scene.add(keeper, striker, berti, sky);
+    dressDogs();
+  }
+
+  function setTeams(home, away) {
+    house.home = home; house.away = away;
+    rebuildHero();
+    [keeper, striker].forEach((p) => { scene.remove(p); removeBlob(p); });
+    keeper = teamPerson(away, { num: '1', hair: 0x1b1b1b, skin: 0xe0ac69 });
+    striker = teamPerson(away, { num: '9', hair: 0x6b4423, skin: 0xffdbac });
+    scene.add(keeper, striker);
+    dressDogs();
+  }
+
+  function setLook(c) {
+    Object.keys(cos).forEach((k) => delete cos[k]);
+    Object.assign(cos, c || {});
+    rebuildHero();
+    dressDogs();
+    setBallSkin(cos.ball || 'classic');
+  }
+
+  // ---------- תנועת דמויות ----------
+  function animateLimbs(o, dt) {
+    const u = o.userData;
+    if (u.pose) return;
+    u.phase += dt * (u.kind === 'dog' ? 14 : 11) * (u.run > 0 ? 1 : 0.25);
+    const sw = u.run > 0 ? Math.sin(u.phase) : 0;
+    if (u.kind === 'person') {
+      u.legL.rotation.x = sw * 0.9; u.legR.rotation.x = -sw * 0.9;
+      u.armL.rotation.x = -sw * 0.8; u.armR.rotation.x = sw * 0.8;
+      u.armL.rotation.z = 0; u.armR.rotation.z = 0;
+      if (!u.run) u.torso.position.y = 1.42 + Math.sin(u.phase) * 0.015;
+    } else {
+      u.legs[0].rotation.x = sw * 0.8; u.legs[3].rotation.x = sw * 0.8;
+      u.legs[1].rotation.x = -sw * 0.8; u.legs[2].rotation.x = -sw * 0.8;
+      u.tailP.rotation.y = Math.sin(clockT * (u.wag ? 22 : 7)) * (u.wag ? 0.7 : 0.25);
+      u.inner.position.y = u.run ? Math.abs(Math.sin(u.phase)) * 0.12 : 0;
+    }
+  }
+
+  function faceTo(o, x, z) { o.rotation.y = Math.atan2(x - o.position.x, z - o.position.z); }
+  async function runTo(o, x, z, dur, keepFace = false) {
+    const sx = o.position.x, sz = o.position.z;
+    if (!keepFace) faceTo(o, x, z);
+    o.userData.run = 1;
+    await tween(dur, (t) => { o.position.x = lerp(sx, x, t); o.position.z = lerp(sz, z, t); }, ease.lin);
+    o.userData.run = 0;
+  }
+  function place(o, x, z, rotY) {
+    o.position.set(x, 0, z);
+    o.rotation.set(0, rotY, 0);
+    o.userData.run = 0; o.userData.pose = false;
+  }
+
+  async function kickAnim(p) {
+    const u = p.userData;
+    u.pose = true;
+    await tween(0.16, (t) => { u.legR.rotation.x = lerp(0, 1.1, t); u.armL.rotation.x = lerp(0, -0.6, t); });
+    await tween(0.12, (t) => { u.legR.rotation.x = lerp(1.1, -1.3, t); });
+    tween(0.3, (t) => { u.legR.rotation.x = lerp(-1.3, 0, t); u.armL.rotation.x = lerp(-0.6, 0, t); }).then(() => (u.pose = false));
+  }
+
+  async function cheer(p, times = 3) {
+    const u = p.userData;
+    u.pose = true;
+    for (let i = 0; i < times; i++) {
+      await tween(0.32, (t) => {
+        p.position.y = Math.sin(t * Math.PI) * 0.9;
+        u.armL.rotation.z = -2.7; u.armR.rotation.z = 2.7; u.armL.rotation.x = 0; u.armR.rotation.x = 0;
+        u.legL.rotation.x = 0; u.legR.rotation.x = 0;
+      }, ease.lin);
+    }
+    u.armL.rotation.z = 0; u.armR.rotation.z = 0;
+    p.position.y = 0; u.pose = false;
+  }
+
+  async function dogHop(d, times = 2) {
+    d.userData.wag = true;
+    for (let i = 0; i < times; i++) await tween(0.28, (t) => { d.position.y = Math.sin(t * Math.PI) * 0.6; }, ease.lin);
+    d.position.y = 0;
+    setTimeout(() => (d.userData.wag = false), 1500);
+  }
+
+  // צידה של הטייה לעבר dx בעולם, בהתחשב בכיוון שהדמות מסתכלת אליו
+  const tiltFor = (o, dx) => -Math.sign(dx || 1) * Math.sign(Math.cos(o.rotation.y) || 1);
+
+  function divePerson(p, tx, ty, dur, reach = 1) {
+    const u = p.userData;
+    u.pose = true;
+    const sx = p.position.x, dx = (tx - sx) * reach, roll = tiltFor(p, dx) * clamp(Math.abs(dx) / 2.2, 0.3, 1.25);
+    u.armL.rotation.z = -2.8; u.armR.rotation.z = 2.8;
+    return tween(dur, (t) => {
+      p.position.x = sx + dx * t;
+      p.position.y = Math.sin(t * Math.PI * 0.85) * clamp(ty * 0.55, 0.15, 1.3);
+      p.rotation.z = roll * t;
+    }, ease.out);
+  }
+  async function recoverPerson(p, x) {
+    const u = p.userData;
+    const sx = p.position.x, sr = p.rotation.z, sy = p.position.y;
+    await tween(0.45, (t) => { p.position.y = lerp(sy, 0, t); p.rotation.z = lerp(sr, 0, t); p.position.x = lerp(sx, x, t); });
+    u.armL.rotation.z = 0; u.armR.rotation.z = 0; u.pose = false;
+  }
+
+  // ---------- תנועת הכדור ----------
+  function holdBall(obj) { ballState.holder = obj; }
+  function freeBall() { ballState.holder = null; }
+  function ballAt(x, z, y = BALL_R) { freeBall(); ball.position.set(x, y, z); lastBall.copy(ball.position); }
+
+  // מסלול בזייה ריבועי מנקודה לנקודה
+  function flyBall(to, dur, { arc = 0.6, curve = 0, e = ease.lin } = {}) {
+    freeBall();
+    const s = ball.position.clone();
+    const c = s.clone().lerp(to, 0.5);
+    c.y += arc; c.x += curve;
+    return tween(dur, (t) => {
+      const a = (1 - t) * (1 - t), b = 2 * (1 - t) * t, d = t * t;
+      ball.position.set(a * s.x + b * c.x + d * to.x, a * s.y + b * c.y + d * to.y, a * s.z + b * c.z + d * to.z);
+    }, e);
+  }
+  async function dropBall(to, dur = 0.5) {
+    const s = ball.position.clone();
+    await tween(dur, (t) => {
+      ball.position.x = lerp(s.x, to.x, t); ball.position.z = lerp(s.z, to.z, t);
+      ball.position.y = Math.max(BALL_R, lerp(s.y, BALL_R, t) + Math.abs(Math.sin(t * Math.PI * 2)) * (1 - t) * 0.8);
+    }, ease.out);
+  }
+
+  // ---------- מצלמה ----------
+  function camFor(v) {
+    const a = camera.aspect;
+    const back = a < 1 ? clamp(1.35 / a, 1.35, 2.1) : a < 1.4 ? 1.15 : 1;
+    if (v === 'attack') return { pos: new T.Vector3(0.4, 3.0 + (back - 1) * 1.6, -19.8 + (back - 1) * 6), look: new T.Vector3(0, 0.9, -40) };
+    if (v === 'defense') return { pos: new T.Vector3(0, 6.2 + (back - 1) * 2, 51.5 + (back - 1) * 7), look: new T.Vector3(0, a < 1 ? -5 : -0.4, 27) };
+    if (v === 'celebrate') return { pos: new T.Vector3(5.5, 2.4, -21), look: new T.Vector3(-0.4, 1.4, -28) };
+    return { pos: new T.Vector3(0, 9, 26), look: new T.Vector3(0, 1.5, 0) };
+  }
+  function setView(v, dur = 0.9) {
+    view = v;
+    if (v === 'menu') return Promise.resolve();
+    const from = { pos: camCur.pos.clone(), look: camCur.look.clone() };
+    const to = camFor(v);
+    if (dur <= 0) { camCur.pos.copy(to.pos); camCur.look.copy(to.look); return Promise.resolve(); }
+    return tween(dur, (t) => { camCur.pos.lerpVectors(from.pos, to.pos, t); camCur.look.lerpVectors(from.look, to.look, t); });
+  }
+
+  // ---------- רצפים שהמשחק מפעיל ----------
+  const RAY_SPOT = { x: -1.3, z: -27.2 }, BALL_SPOT = { x: 0, z: -29 };
+  const SKY_SPOT = { x: 6.5, z: -25.5 };
+
+  function attackSetup() {
+    place(hero, RAY_SPOT.x, RAY_SPOT.z, Math.PI);
+    ballAt(BALL_SPOT.x, BALL_SPOT.z);
+    place(keeper, 0, ATK_Z + 0.6, 0);
+    keeper.visible = true;
+    place(sky, SKY_SPOT.x, SKY_SPOT.z, -Math.PI * 0.6);
+    place(berti, 0, OWN_Z - 0.8, Math.PI);
+    place(striker, -6, -8, Math.PI);
+    return setView('attack');
+  }
+
+  function charge(on) {
+    const target = on ? 0.55 : 0;
+    const s = ballGlow.material.opacity;
+    return tween(0.25, (t) => (ballGlow.material.opacity = lerp(s, target, t)));
+  }
+
+  // הפיכת נגיעה במסך לנקודה בתוך השער (מישור z=ATK_Z)
+  const ray3 = new T.Raycaster();
+  function screenToGoal(cx, cy) {
+    const r = renderer.domElement.getBoundingClientRect();
+    const v = new T.Vector2(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+    ray3.setFromCamera(v, camera);
+    const o = ray3.ray.origin, d = ray3.ray.direction;
+    if (Math.abs(d.z) < 1e-4) return { x: 0, y: 1.2 };
+    const k = (ATK_Z - o.z) / d.z;
+    return { x: clamp(o.x + d.x * k, -GW / 2 + 0.5, GW / 2 - 0.5), y: clamp(o.y + d.y * k, 0.35, GH - 0.35) };
+  }
+  // נקודה בשער ← מיקום במסך (לסימון יעד)
+  function goalToScreen(x, y, z = ATK_Z) {
+    const v = new T.Vector3(x, y, z).project(camera);
+    const r = renderer.domElement.getBoundingClientRect();
+    return { x: r.left + ((v.x + 1) / 2) * r.width, y: r.top + ((1 - v.y) / 2) * r.height };
+  }
+
+  // outcome: 'goal' | 'save' | 'post'. power: 1 רגיל, 2 בעיטת על. curve: לחש ווינגרדיום
+  async function shoot({ tx, ty, outcome, power = 1, curve = false }) {
+    await runTo(hero, BALL_SPOT.x - 0.35, BALL_SPOT.z + 0.75, 0.22, true);
+    kickAnim(hero);
+    await wait(0.2);
+    fx('kick', power);
+    const dur = power > 1 ? 0.42 : 0.6;
+    const side = Math.sign(tx) || 1;
+    if (outcome === 'post') { tx = side * (GW / 2); ty = clamp(ty, 0.6, GH - 0.4); }
+    const end = new T.Vector3(tx, ty, ATK_Z + (outcome === 'save' ? 0.4 : 0));
+    const keeperTarget = outcome === 'save' ? tx : outcome === 'goal' ? -side * rand(1.4, 2.6) : side * 1.2;
+    divePerson(keeper, keeperTarget, outcome === 'save' ? ty : 0.8, dur * 1.05, 0.95);
+    const trail = setInterval(() => !paused && burst(ball.position.clone(), power > 1 ? [0xffd35a, 0xfff1a8] : [0xffffff], 2, 1.2), 40);
+    await flyBall(end, dur, { arc: 0.4 + ty * 0.25, curve: curve ? -side * 3.2 : 0 });
+    clearInterval(trail);
+    if (outcome === 'goal') {
+      fx('net');
+      bulge('atk');
+      await flyBall(new T.Vector3(tx * 0.9, Math.max(BALL_R, ty * 0.6), ATK_Z - GD + 0.35), 0.18, { arc: 0 });
+      dropBall(new T.Vector3(tx * 0.8, 0, ATK_Z - GD + 0.5), 0.6);
+      burst(new T.Vector3(0, GH, ATK_Z), [HOUSES[house.home].main, HOUSES[house.home].trim, 0xffffff], 70, 9);
+    } else if (outcome === 'save') {
+      fx('save');
+      holdBall(keeper);
+      await wait(0.25);
+      freeBall();
+      await flyBall(new T.Vector3(side * rand(5, 9), BALL_R, ATK_Z + rand(5, 9)), 0.7, { arc: 2 });
+    } else {
+      fx('post');
+      await flyBall(new T.Vector3(side * 8, BALL_R, ATK_Z + 6), 0.65, { arc: 1.5 });
+    }
+    recoverPerson(keeper, 0);
+  }
+
+  async function celebrateGoal() {
+    fx('crowd');
+    crowdJump();
+    sky.userData.wag = true;
+    await Promise.all([cheer(hero, 3), dogHop(sky, 3), setView('celebrate', 0.6)]);
+  }
+
+  async function fumble() {
+    await runTo(hero, BALL_SPOT.x - 0.35, BALL_SPOT.z + 0.75, 0.22, true);
+    kickAnim(hero);
+    await wait(0.18);
+    fx('fumble');
+    const stop = { x: 3.4, z: -32.5 };
+    await dropBall(new T.Vector3(stop.x, 0, stop.z), 0.9);
+    fx('bark');
+    sky.userData.wag = true;
+    await runTo(sky, stop.x + 0.2, stop.z + 1.2, 0.55);
+    holdBall(sky);
+    await runTo(sky, BALL_SPOT.x + 1.1, BALL_SPOT.z + 0.4, 0.6);
+    freeBall();
+    await dropBall(new T.Vector3(BALL_SPOT.x, 0, BALL_SPOT.z), 0.25);
+    fx('bark');
+    await dogHop(sky, 1);
+    sky.userData.wag = false;
+    runTo(sky, SKY_SPOT.x, SKY_SPOT.z, 0.6).then(() => faceTo(sky, 0, -32));
+  }
+
+  async function defenseSetup() {
+    keeper.visible = false;
+    place(berti, 0, OWN_Z - 0.8, Math.PI);
+    place(sky, 7.5, OWN_Z - 6, -Math.PI * 0.7);
+    place(hero, -7, 22, Math.PI * 0.85);
+    const sx = rand(-6, 6), ex = rand(-1.5, 1.5);
+    place(striker, sx, 16, 0);
+    ballAt(sx, 17);
+    holdBall({ follow: striker, ahead: 1.1 });
+    await setView('defense', 0.8);
+    await runTo(striker, ex, OWN_Z - 11.2, 1.5);
+    freeBall();
+    ball.position.set(ex, BALL_R, OWN_Z - 10);
+  }
+
+  // outcome: 'save' | 'clear' | 'goal' | 'post'
+  async function oppShoot(outcome) {
+    const side = Math.random() < 0.5 ? -1 : 1;
+    let tx = side * rand(1.4, 3.1), ty = rand(0.4, 1.9);
+    if (outcome === 'post') { tx = side * (GW / 2); ty = rand(0.8, 2); }
+    kickAnim(striker);
+    await wait(0.2);
+    fx('kick', 1);
+    const dur = 0.6;
+    const bu = berti.userData;
+    const sx = berti.position.x;
+    const diveX = outcome === 'goal' ? -side * 2 : outcome === 'post' ? side * 1 : tx;
+    const roll = tiltFor(berti, diveX - sx) * 0.7;
+    bu.wag = true;
+    const dive = tween(dur * 1.05, (t) => {
+      berti.position.x = lerp(sx, diveX, t);
+      berti.position.y = Math.sin(t * Math.PI * 0.85) * clamp(ty * 0.7, 0.2, 1.6);
+      berti.rotation.z = roll * t;
+      bu.jaw.position.y = -0.27 - t * 0.08;
+    }, ease.out);
+    const end = new T.Vector3(tx, ty, OWN_Z - (outcome === 'save' || outcome === 'clear' ? 0.9 : 0));
+    await flyBall(end, dur, { arc: 0.5 });
+    await dive;
+    if (outcome === 'save' || outcome === 'clear') {
+      fx('save'); fx('bark');
+      holdBall(berti);
+      await tween(0.4, (t) => { berti.position.y = lerp(berti.position.y, 0, t); berti.rotation.z = lerp(berti.rotation.z, 0, t); });
+      burst(berti.position.clone().setY(1.5), [HOUSES[house.home].main, HOUSES[house.home].trim, 0xffffff], 50, 7);
+      dogHop(berti, 2);
+      if (outcome === 'clear') {
+        await wait(0.35);
+        freeBall();
+        fx('kick', 2);
+        await flyBall(new T.Vector3(rand(-8, 8), BALL_R, rand(-5, 5)), 1.0, { arc: 9 });
+      } else {
+        await wait(0.6);
+      }
+    } else if (outcome === 'goal') {
+      fx('net');
+      bulge('own');
+      await flyBall(new T.Vector3(tx * 0.9, Math.max(BALL_R, ty * 0.6), OWN_Z + GD - 0.35), 0.18, { arc: 0 });
+      dropBall(new T.Vector3(tx * 0.8, 0, OWN_Z + GD - 0.5), 0.6);
+      await tween(0.4, (t) => { berti.position.y = lerp(berti.position.y, 0, t); berti.rotation.z = lerp(berti.rotation.z, 0, t); });
+      cheer(striker, 1);
+      await wait(0.5);
+    } else {
+      fx('post');
+      await flyBall(new T.Vector3(side * 8, BALL_R, OWN_Z - 6), 0.65, { arc: 1.5 });
+      await tween(0.4, (t) => { berti.position.y = lerp(berti.position.y, 0, t); berti.rotation.z = lerp(berti.rotation.z, 0, t); });
+    }
+    bu.jaw.position.y = -0.27;
+    bu.wag = false;
+    berti.rotation.z = 0;
+  }
+
+  function crowdJump() {
+    tween(1.2, (t) => (crowd.position.y = Math.abs(Math.sin(t * Math.PI * 4)) * 0.35 * (1 - t)), ease.lin);
+  }
+
+  function menuSetup() {
+    view = 'menu';
+    keeper.visible = false;
+    place(hero, 0, 0, 0);
+    place(berti, -2.4, 0.6, 0.35);
+    place(sky, 2.2, 0.8, -0.35);
+    place(striker, -40, -60, 0);
+    ballAt(0, 0.6, 2.9);
+  }
+
+  function endSetup() {
+    view = 'end';
+    keeper.visible = false;
+    place(hero, 0, 0, 0);
+    place(berti, -2.4, 0.5, 0.3);
+    place(sky, 2.2, 0.6, -0.3);
+    ballAt(0.9, 1.2);
+    setView('end-cam', 0);
+    camCur.pos.set(0, 2.6, 8.5); camCur.look.set(0, 1.4, 0);
+    cheer(hero, 4); dogHop(berti, 3); dogHop(sky, 3);
+    burst(new T.Vector3(0, 4, 0), [HOUSES[house.home].main, HOUSES[house.home].trim, 0xffffff, 0xffd35a], 90, 8);
+  }
+
+  // ---------- לולאה ----------
+  let last = 0;
+  const SPEEDUP = Number(new URLSearchParams(location.search).get('speed')) || 1; // לבדיקות אוטומטיות
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (now - last) / 1000 || 0) * SPEEDUP;
+    last = now;
+    if (!paused) {
+      clockT += dt;
+      stepTweens(dt);
+      stepParts(dt);
+    }
+    const h = ballState.holder;
+    if (h) {
+      if (h.follow) {
+        const f = h.follow;
+        ball.position.set(f.position.x + Math.sin(f.rotation.y) * h.ahead, BALL_R, f.position.z + Math.cos(f.rotation.y) * h.ahead);
+      } else if (h.userData.mouth) {
+        h.userData.mouth.getWorldPosition(ball.position);
+      } else {
+        h.getWorldPosition(ball.position);
+        ball.position.y += 1.6;
+      }
+    }
+    if (view === 'menu' && !paused) {
+      // השחקן מקפיץ את הכדור על הראש
+      const k = (clockT * 1.6) % 1;
+      ball.position.set(0, 2.9 + Math.sin(k * Math.PI) * 1.6, 0.05);
+      if (k < 0.04) hero.userData.headP.rotation.x = -0.25; else hero.userData.headP.rotation.x *= 0.9;
+      const a = Math.sin(clockT * 0.18) * 0.55;
+      const r = camera.aspect < 1 ? 13 : 9.5;
+      camCur.pos.set(Math.sin(a) * r, 2.2, Math.cos(a) * r);
+      camCur.look.set(0, camera.aspect < 1 ? 2.3 : 1.15, 0);
+    }
+    [hero, keeper, striker, berti, sky].forEach((o) => o && !paused && animateLimbs(o, dt));
+    if (view === 'defense' || view === 'attack') {
+      if (keeper.visible && !keeper.userData.pose) keeper.position.x = Math.sin(clockT * 1.4) * 0.6;
+    }
+    candles.forEach((c) => (c.position.y += Math.sin(clockT * 1.3 + c.userData.ph) * 0.004));
+    if (ballState.skin === 'snitch') ballWings.children.forEach((w, i) => (w.rotation.y = Math.sin(clockT * 40) * 0.6 * (i ? 1 : -1)));
+    ballGlow.scale.setScalar(1 + Math.sin(clockT * 8) * 0.12);
+    rollBall();
+    blobs.forEach((b) => { b.m.position.set(b.obj.position.x, 0.02, b.obj.position.z); b.m.visible = b.obj.visible !== false; });
+    camera.position.copy(camCur.pos);
+    camera.lookAt(camCur.look);
+    renderer.render(scene, camera);
+  }
+
+  function resize() {
+    const w = container.clientWidth, h = container.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.fov = camera.aspect < 1 ? 62 : 52;
+    camera.updateProjectionMatrix();
+    if (view === 'attack' || view === 'defense') { const c = camFor(view); camCur.pos.copy(c.pos); camCur.look.copy(c.look); }
+  }
+
+  function init(el, fxFn) {
+    container = el;
+    fx = fxFn || fx;
+    renderer = new T.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.domElement.style.cssText = 'width:100%;height:100%;display:block';
+    el.appendChild(renderer.domElement);
+    scene = new T.Scene();
+    scene.background = new T.Color(0x8fcbff);
+    scene.fog = new T.Fog(0xbfe2ff, 90, 260);
+    camera = new T.PerspectiveCamera(52, 1, 0.1, 500);
+    scene.add(new T.HemisphereLight(0xffffff, 0x4a7a3a, 0.7));
+    const sun = new T.DirectionalLight(0xfff2d6, 0.75);
+    sun.position.set(20, 40, 15);
+    scene.add(sun);
+    partGeo = new T.PlaneGeometry(0.22, 0.14);
+    makeBallSkins();
+    buildField();
+    buildGoal(ATK_Z, 'atk');
+    buildGoal(OWN_Z, 'own');
+    crowd = buildStands();
+    buildCastle();
+    buildCandles();
+    buildClouds();
+    buildActors();
+    makeBall();
+    blobs.forEach((b) => scene.add(b.m));
+    menuSetup();
+    window.addEventListener('resize', resize);
+    resize();
+    requestAnimationFrame(frame);
+  }
+
+  // צללים לדמויות שנבנות מחדש (השחקן אחרי החלפת תלבושת)
+  function syncBlobs() { blobs.forEach((b) => { if (!b.m.parent) scene.add(b.m); }); }
+
+  // ביטול כל האנימציות שבדרך (יציאה לתפריט באמצע משחק)
+  function reset() {
+    tweens.length = 0;
+    parts.forEach((p) => { scene.remove(p.m); p.m.material.dispose(); });
+    parts.length = 0;
+    paused = false;
+    [hero, keeper, striker, berti, sky].forEach((o) => { o.position.y = 0; o.rotation.z = 0; o.userData.pose = false; o.userData.run = 0; });
+    ballGlow.material.opacity = 0;
+    nets.atk.scale.set(1, 1, 1); nets.own.scale.set(1, 1, 1);
+    crowd.position.y = 0;
+    menuSetup();
+  }
+
+  return {
+    init, reset,
+    setPaused: (p) => (paused = p),
+    setTeams: (h, a) => { setTeams(h, a); syncBlobs(); },
+    setLook: (c) => { setLook(c); syncBlobs(); },
+    menuSetup, endSetup, attackSetup, defenseSetup,
+    charge, shoot, celebrateGoal, fumble, oppShoot, screenToGoal, goalToScreen,
+    cheerHero: () => cheer(hero, 2),
+    HOUSES, GW, GH,
+  };
+})();
+
+</script>
+  <script>
+// גביע הוגוורטס — זרימת המשחק, חזרה מרווחת על מילים, אתגרים, חנות, ארון קלפים ומסך הורים.
+// התלת-ממד ב-scene.js (Pitch), החיבור לגיליון ב-sync.js (Sheet), התוכן ההתחלתי ב-content.js.
+(() => {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const keyOf = (en) => String(en).trim().toLowerCase();
+  const pad = (n) => String(n).padStart(2, '0');
+  const dayStr = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const today = () => dayStr();
+  const addDays = (s, n) => { const d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + n); return dayStr(d); };
+
+  if (!window.THREE) { $('#loadError').hidden = false; $('#menu').hidden = true; return; }
+
+  // ================= שמירה =================
+  const SAVE_KEY = 'hogcup:v1', CONTENT_KEY = 'hogcup:content';
+  const freshState = () => ({
+    words: {},
+    game: { coins: 0, owned: [], equip: {}, season: 1, stage: 0, matches: 0, wins: 0, goals: 0 },
+    sessions: [], pending: [], localSettings: {}, muted: false, dirty: false, lastSync: 0, updated: 0,
+  });
+  let S = freshState();
+  try { const raw = JSON.parse(localStorage.getItem(SAVE_KEY)); if (raw) S = Object.assign(freshState(), raw, { game: Object.assign(freshState().game, raw.game) }); } catch (e) {}
+  const persist = () => { S.updated = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} };
+
+  let content = { settings: {}, words: DEFAULT_WORDS, sheetUrl: '' };
+  try { const c = JSON.parse(localStorage.getItem(CONTENT_KEY)); if (c && c.words && c.words.length) content = c; } catch (e) {}
+  const saveContent = () => { try { localStorage.setItem(CONTENT_KEY, JSON.stringify(content)); } catch (e) {} };
+
+  const settings = () => Object.assign({}, DEFAULT_SETTINGS, Sheet.connected ? content.settings : S.localSettings);
+  const allWords = () => (content.words && content.words.length >= 3 ? content.words : DEFAULT_WORDS).map((w) => Object.assign({ key: keyOf(w.en) }, w));
+
+  // ================= קול =================
+  const muted = () => S.muted;
+  let actx = null, master = null, ambience = null;
+  function audio() {
+    if (!actx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      actx = new AC();
+      master = actx.createGain();
+      master.gain.value = S.muted ? 0 : 0.8;
+      master.connect(actx.destination);
+    }
+    if (actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+  function tone(f, at, dur, type = 'sine', vol = 0.1, f2 = null) {
+    const c = audio(); if (!c) return;
+    const t = c.currentTime + at, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(master); o.start(t); o.stop(t + dur + 0.05);
+  }
+  let noiseBuf = null;
+  function noise(at, dur, freq, vol, q = 1, type = 'bandpass') {
+    const c = audio(); if (!c) return;
+    if (!noiseBuf) { noiseBuf = c.createBuffer(1, c.sampleRate * 2, c.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    const t = c.currentTime + at, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    s.buffer = noiseBuf; s.loop = true; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.15, dur / 4)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f).connect(g).connect(master); s.start(t); s.stop(t + dur + 0.05);
+  }
+  function sfx(name, arg) {
+    if (S.muted) return;
+    switch (name) {
+      case 'kick': tone(arg > 1 ? 120 : 160, 0, 0.12, 'sine', 0.35, 50); noise(0, 0.07, 1800, 0.12); if (arg > 1) [660, 880, 1320].forEach((f, i) => tone(f, 0.02 + i * 0.05, 0.25, 'triangle', 0.05)); break;
+      case 'net': noise(0, 0.35, 900, 0.12, 0.6); break;
+      case 'save': tone(220, 0, 0.12, 'square', 0.06, 160); noise(0, 0.1, 600, 0.1); break;
+      case 'post': tone(1250, 0, 0.5, 'triangle', 0.1); tone(1880, 0, 0.35, 'sine', 0.05); break;
+      case 'fumble': tone(330, 0, 0.18, 'sine', 0.08, 220); break;
+      case 'bark': [0, 0.17].forEach((at) => { tone(190, at, 0.11, 'sawtooth', 0.09, 110); noise(at, 0.08, 700, 0.08, 2); }); break;
+      case 'crowd': noise(0, 2.2, 700, 0.18, 0.5); noise(0.05, 1.8, 1500, 0.08, 0.7); [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.1 + i * 0.09, 0.3, 'triangle', 0.06)); break;
+      case 'correct': tone(784, 0, 0.12, 'triangle', 0.09); tone(1175, 0.08, 0.2, 'triangle', 0.08); break;
+      case 'wrong': tone(392, 0, 0.16, 'sine', 0.07); tone(330, 0.12, 0.22, 'sine', 0.06); break;
+      case 'coin': tone(1046, 0, 0.08, 'square', 0.035); tone(1568, 0.06, 0.18, 'square', 0.035); break;
+      case 'whistle': [0, 0.32].forEach((at, i) => { tone(2650, at, i ? 0.55 : 0.22, 'sine', 0.07); tone(2710, at, i ? 0.55 : 0.22, 'sine', 0.05); }); break;
+      case 'item': [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, i * 0.06, 0.25, 'triangle', 0.07)); break;
+      case 'tick': tone(1400, 0, 0.03, 'square', 0.03); break;
+      case 'click': tone(880, 0, 0.05, 'sine', 0.05); break;
+      case 'win': [523, 659, 784, 1046, 784, 1046, 1318].forEach((f, i) => tone(f, i * 0.14, 0.32, 'triangle', 0.09)); break;
+      case 'card': [988, 1318, 1760].forEach((f, i) => tone(f, i * 0.07, 0.3, 'sine', 0.06)); break;
+    }
+  }
+  function setAmbience(on) {
+    const c = audio(); if (!c) return;
+    if (on && !ambience) {
+      if (!noiseBuf) noise(0, 0.01, 500, 0.0001);
+      const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      s.buffer = noiseBuf; s.loop = true; f.type = 'bandpass'; f.frequency.value = 520; f.Q.value = 0.4; g.gain.value = 0.035;
+      s.connect(f).connect(g).connect(master); s.start();
+      ambience = { s, g };
+    } else if (!on && ambience) {
+      ambience.s.stop(); ambience = null;
+    }
+  }
+  function setMuted(m) {
+    S.muted = m; persist();
+    if (master) master.gain.value = m ? 0 : 0.8;
+    $('#muteBtn').textContent = m ? '🔇' : '🔊';
+    $('#muteBtn').setAttribute('aria-pressed', m ? 'true' : 'false');
+    if (m && window.speechSynthesis) speechSynthesis.cancel();
+  }
+
+  // הקראת אנגלית היא הלמידה עצמה, ולכן היא לא תלויה בכפתור 🗣️ (רק ב-🔊). עברית עוברת דרך KidsLearn.say.
+  let enVoice = null;
+  function pickVoice() {
+    if (!('speechSynthesis' in window)) return;
+    const vs = speechSynthesis.getVoices().filter((v) => /^en(-|_)/i.test(v.lang));
+    const prefer = [/Samantha/i, /Google US English/i, /Aria/i, /Jenny/i, /Ava/i, /Zira/i, /en-US/i];
+    for (const p of prefer) { const v = vs.find((x) => p.test(x.name) || p.test(x.lang)); if (v) { enVoice = v; return; } }
+    enVoice = vs[0] || null;
+  }
+  if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  function speakEn(text, rate = 0.85) {
+    return new Promise((res) => {
+      if (S.muted || !('speechSynthesis' in window) || !text) return res();
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US'; if (enVoice) u.voice = enVoice; u.rate = rate; u.pitch = 1.05;
+      let done = false;
+      const fin = () => { if (!done) { done = true; res(); } };
+      u.onend = fin; u.onerror = fin;
+      setTimeout(fin, 1200 + text.length * 140 / rate);
+      speechSynthesis.speak(u);
+    });
+  }
+  const sayHe = (t) => { if (!S.muted && window.KidsLearn) KidsLearn.say(t); };
+
+  // ================= חזרה מרווחת (Leitner) =================
+  // שלב 0–5. עולים שלב אחד לכל היותר ביום. "נשלטה" = תשובה נכונה ראשונה ב-3 ימים שונים.
+  const INTERVAL = [0, 1, 2, 4, 7, 14];
+  const wp = (key) => S.words[key] || (S.words[key] = { box: 0, right: 0, wrong: 0, days: [], last: '', due: '', mastered: '', seen: false, lastUp: '' });
+
+  function introduce(w) {
+    const p = wp(w.key);
+    p.seen = true; p.he = w.he; p.due = today(); p.last = today();
+  }
+  function record(w, correct, first) {
+    const p = wp(w.key);
+    p.seen = true; p.he = w.he;
+    correct ? p.right++ : p.wrong++;
+    p.last = today();
+    if (!first) return null;
+    let event = null;
+    if (correct) {
+      if (p.lastUp !== today()) { p.box = Math.min(5, p.box + 1); p.lastUp = today(); }
+      if (!p.days.includes(today())) p.days.push(today());
+      if (!p.mastered && p.days.length >= 3 && p.box >= 3) { p.mastered = today(); event = 'mastered'; }
+    } else {
+      p.box = Math.max(1, p.box - 1);
+    }
+    p.due = addDays(today(), INTERVAL[p.box]);
+    return event;
+  }
+  const isHard = (p) => p && p.wrong >= 3 && p.wrong > p.right / 2 && !p.mastered;
+
+  function buildPool() {
+    const words = allWords();
+    const st = settings();
+    const t = today();
+    const seen = (w) => S.words[w.key] && S.words[w.key].seen;
+    const pool = [], fresh = [];
+    const add = (w) => { if (!pool.includes(w)) pool.push(w); };
+    words.filter((w) => seen(w) && S.words[w.key].due && S.words[w.key].due <= t)
+      .sort((a, b) => (S.words[a.key].due < S.words[b.key].due ? -1 : 1)).slice(0, 6).forEach(add);
+    words.filter((w) => w.active && seen(w) && !S.words[w.key].mastered && !pool.includes(w))
+      .sort((a, b) => S.words[a.key].box - S.words[b.key].box).forEach((w) => pool.length < 7 && add(w));
+    const learning = words.filter((w) => seen(w) && !S.words[w.key].mastered).length;
+    const nNew = learning > 15 ? Math.min(2, st.newPerMatch) : st.newPerMatch;
+    words.filter((w) => w.active && !seen(w)).slice(0, nNew).forEach((w) => { add(w); fresh.push(w); });
+    if (pool.length < 6) shuffle(words.filter(seen)).forEach((w) => pool.length < 8 && add(w));
+    if (pool.length < 4) shuffle(words).forEach((w) => pool.length < 6 && add(w));
+    return { pool, fresh };
+  }
+
+  // ================= ליגה =================
+  const HOUSE_INFO = {
+    gryffindor: { he: 'גריפינדור', crest: '🦁' },
+    slytherin: { he: 'סלית׳רין', crest: '🐍' },
+    hufflepuff: { he: 'הפלפאף', crest: '🦡' },
+    ravenclaw: { he: 'רייבנקלו', crest: '🦅' },
+    durmstrang: { he: 'דורמשטרנג', crest: '🏔️' },
+  };
+  function league() {
+    const home = settings().house;
+    const order = ['hufflepuff', 'ravenclaw', 'slytherin', 'gryffindor'].filter((h) => h !== home);
+    return [...order, 'durmstrang'];
+  }
+  const difficulty = () => Math.min(0.25, S.game.stage * 0.04 + (S.game.season - 1) * 0.05);
+
+  // ================= פריטים (בסגנון מריו קארט) =================
+  const ITEMS = {
+    snitch: { emoji: '✨', name: 'סניץ׳ זהב', tip: 'הגול הבא שווה 2!' },
+    broom: { emoji: '🧹', name: 'מטאטא טורבו', tip: 'רק 2 תשובות, ובעיטת על!' },
+    wand: { emoji: '🪄', name: 'ווינגרדיום לביוסה', tip: 'הבעיטה הבאה נכנסת בטוח!' },
+    protego: { emoji: '🛡️', name: 'פרוטגו', tip: 'ההגנה הבאה בטוחה!' },
+  };
+
+  // ================= חנות =================
+  const SHOP = () => {
+    const st = settings();
+    return [
+      { id: 'glasses', slot: 'glasses', emoji: '👓', name: 'משקפיים עגולים', price: 40 },
+      { id: 'boots_gold', slot: 'boots', val: 'gold', emoji: '👟', name: 'נעלי זהב', price: 60 },
+      { id: 'boots_rainbow', slot: 'boots', val: 'rainbow', emoji: '🌈', name: 'נעלי צבעים', price: 90 },
+      { id: 'hat', slot: 'hat', emoji: '🧙', name: 'כובע קוסמים', price: 70 },
+      { id: 'cape', slot: 'cape', emoji: '🦸', name: 'גלימה בצבעי הבית', price: 100 },
+      { id: 'ball_quaffle', slot: 'ball', val: 'quaffle', emoji: '🔴', name: 'כדור קוואפל', price: 80 },
+      { id: 'ball_snitch', slot: 'ball', val: 'snitch', emoji: '✨', name: 'כדור סניץ׳ מעופף', price: 150 },
+      { id: 'berti_collar', slot: 'bertiCollar', emoji: '🏅', name: `קולר זהב ל${st.keeperDog}`, price: 50 },
+      { id: 'berti_scarf', slot: 'bertiScarf', emoji: '🧣', name: `צעיף ל${st.keeperDog}`, price: 70 },
+      { id: 'sky_bandana', slot: 'skyBandana', emoji: '🔺', name: `בנדנה ל${st.fetchDog}`, price: 50 },
+      { id: 'sky_crown', slot: 'skyCrown', emoji: '👑', name: `כתר ל${st.fetchDog}`, price: 120 },
+    ];
+  };
+  function applyLook() {
+    const e = S.game.equip || {};
+    Pitch.setLook({ glasses: !!e.glasses, boots: e.boots, hat: !!e.hat, cape: !!e.cape, ball: e.ball, bertiCollar: !!e.bertiCollar, bertiScarf: !!e.bertiScarf, skyBandana: !!e.skyBandana, skyCrown: !!e.skyCrown });
+  }
+
+  // ================= HUD =================
+  const app = $('#app');
+  function setMode(m) { app.dataset.mode = m; }
+  function updateCoins(pop) {
+    $('#coins').textContent = '🪙 ' + S.game.coins;
+    if (pop) { $('#coins').classList.remove('pop'); void $('#coins').offsetWidth; $('#coins').classList.add('pop'); }
+  }
+  function addCoins(n) { S.game.coins += n; M && (M.coins += n); updateCoins(true); sfx('coin'); }
+  let bannerT = 0;
+  function banner(text, cls = '') {
+    const b = $('#banner');
+    b.className = cls; b.textContent = text;
+    void b.offsetWidth; b.classList.add('show');
+    clearTimeout(bannerT);
+    bannerT = setTimeout(() => b.classList.remove('show'), 1600);
+  }
+  let toastT = 0;
+  function toast(html, ms = 2200) {
+    const t = $('#toast');
+    t.innerHTML = html; t.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(() => t.classList.remove('show'), ms);
+  }
+  function updateScore() {
+    $('#sHome').textContent = M.home; $('#sAway').textContent = M.away;
+    $('#half').textContent = M.half === 1 ? '1️⃣' : '2️⃣';
+    $('#playsBar i').style.width = (M.play / M.plays) * 100 + '%';
+    const st = M.streak % 3;
+    $('#streak').innerHTML = [0, 1, 2].map((i) => `<i class="${i < st ? 'on' : ''}"></i>`).join('');
+  }
+  function updateItemSlot() {
+    const s = $('#itemSlot');
+    s.classList.toggle('armed', !!M.armed);
+    s.classList.toggle('ready', !!M.item);
+    s.textContent = M.armed ? ITEMS[M.armed].emoji : M.item ? ITEMS[M.item].emoji : '❔';
+    s.setAttribute('aria-label', M.item ? 'הפעלת ' + ITEMS[M.item].name : 'פריט');
+  }
+  function crest(h) {
+    const c = Pitch.HOUSES[h];
+    return `<span class="crest" style="--c1:#${c.main.toString(16).padStart(6, '0')};--c2:#${c.trim.toString(16).padStart(6, '0')}">${HOUSE_INFO[h].crest}</span>`;
+  }
+
+  // ================= אתגר מילה =================
+  const TYPES = {
+    listen: { icon: '👂', label: 'מקשיבים ובוחרים תמונה' },
+    read: { icon: '👀', label: 'קוראים ובוחרים תמונה' },
+    pic2word: { icon: '🖼️', label: 'איזו מילה זאת?' },
+    hear2word: { icon: '👂', label: 'איזו מילה שמעת?' },
+    letter: { icon: '🔤', label: 'איזו אות חסרה?' },
+  };
+  const said = new Set();
+  const isImg = (s) => /^https?:\/\//.test(s || '');
+  const picHtml = (w) => (w.emoji ? (isImg(w.emoji) ? `<img src="${esc(w.emoji)}" alt="">` : `<span class="emo">${esc(w.emoji)}</span>`) : `<span class="he">${esc(w.he)}</span>`);
+  const picKey = (w) => w.emoji || w.he;
+
+  function typeFor(w, last) {
+    const box = wp(w.key).box;
+    const letterOk = /[a-z]{3,}/i.test(w.en);
+    let types = box <= 0 ? ['listen'] : box === 1 ? ['listen', 'read'] : box === 2 ? ['read', 'hear2word', 'pic2word'] : ['pic2word', 'hear2word', 'read', ...(letterOk ? ['letter', 'letter'] : [])];
+    if (types.length > 1) types = types.filter((t) => t !== last);
+    return pick(types);
+  }
+
+  function distractors(w, n, byWord) {
+    const words = shuffle(allWords().filter((x) => x.key !== w.key));
+    const same = words.filter((x) => x.pack === w.pack), other = words.filter((x) => x.pack !== w.pack);
+    const out = [], used = new Set([byWord ? keyOf(w.en) : picKey(w)]);
+    for (const x of [...same, ...other]) {
+      const k = byWord ? keyOf(x.en) : picKey(x);
+      if (used.has(k)) continue;
+      used.add(k); out.push(x);
+      if (out.length >= n) break;
+    }
+    return out;
+  }
+
+  function letterTask(w) {
+    const word = w.en;
+    const idx = [...word].map((c, i) => [c, i]).filter(([c]) => /[a-z]/i.test(c));
+    const vowels = idx.filter(([c]) => /[aeiou]/i.test(c));
+    const [ch, at] = pick(vowels.length && Math.random() < 0.7 ? vowels : idx);
+    const pool = /[aeiou]/i.test(ch) ? 'aeiou' : 'bcdfghklmnprstw';
+    const wrong = shuffle([...pool].filter((c) => c !== ch.toLowerCase())).slice(0, 2);
+    return { at, ch: ch.toLowerCase(), wrong };
+  }
+
+  let lastType = '';
+  function ask(w, nOpts = 3) {
+    return new Promise((resolve) => {
+      const type = typeFor(w, lastType);
+      lastType = type;
+      const box = $('#challenge');
+      const byWord = type === 'pic2word' || type === 'hear2word';
+      let opts, promptHtml, task = null;
+      if (type === 'letter') {
+        task = letterTask(w);
+        opts = shuffle([task.ch, ...task.wrong.slice(0, nOpts - 1)]).map((c) => ({ id: c, html: `<span class="letter">${c}</span>`, ok: c === task.ch }));
+        const shown = [...w.en].map((c, i) => (i === task.at ? '<u>_</u>' : esc(c))).join('');
+        promptHtml = `<div class="pic">${picHtml(w)}</div><div class="word gap" dir="ltr">${shown}</div><button class="say" data-say="1" aria-label="השמע">🔊</button>`;
+      } else {
+        const ds = distractors(w, nOpts - 1, byWord);
+        opts = shuffle([w, ...ds]).map((x) => ({ id: x.key, html: byWord ? `<span class="word" dir="ltr">${esc(x.en)}</span>` : picHtml(x), ok: x.key === w.key }));
+        if (type === 'listen' || type === 'hear2word') promptHtml = `<button class="say big" data-say="1" aria-label="השמע שוב">🔊</button><button class="say slow" data-say="slow" aria-label="לאט">🐢</button>`;
+        else if (type === 'read') promptHtml = `<div class="word big" dir="ltr">${esc(w.en)}</div>`;
+        else promptHtml = `<div class="pic big">${picHtml(w)}</div>`;
+      }
+      $('#chIcon').textContent = TYPES[type].icon;
+      $('#chLabel').textContent = TYPES[type].label;
+      $('#chPrompt').innerHTML = promptHtml;
+      $('#chOptions').innerHTML = opts.map((o, i) => `<button class="opt" data-i="${i}" dir="ltr">${o.html}</button>`).join('');
+      $('#chOptions').dataset.n = opts.length;
+      box.hidden = false;
+      box.classList.remove('in'); void box.offsetWidth; box.classList.add('in');
+      if (!said.has(type)) { said.add(type); sayHe(TYPES[type].label); }
+
+      let t0 = performance.now(), answered = false;
+      const speakPrompt = (slow) => speakEn(w.en, slow ? 0.5 : 0.85);
+      if (type === 'listen' || type === 'hear2word' || type === 'letter') {
+        setTimeout(() => speakPrompt().then(() => (t0 = performance.now())), said.size === 1 && type !== 'letter' ? 1400 : 250);
+      }
+      $('#chPrompt').onclick = (e) => {
+        const b = e.target.closest('[data-say]');
+        if (b) { audio(); speakPrompt(b.dataset.say === 'slow'); }
+      };
+      $('#chOptions').onclick = async (e) => {
+        const b = e.target.closest('.opt');
+        if (!b || answered) return;
+        answered = true;
+        audio();
+        const ms = performance.now() - t0;
+        const o = opts[+b.dataset.i];
+        const okBtn = $('#chOptions').children[opts.findIndex((x) => x.ok)];
+        okBtn.classList.add('ok');
+        const reveal = `<b dir="ltr">${esc(w.en)}</b> = ${esc(w.he)} ${isImg(w.emoji) ? '' : esc(w.emoji || '')}`;
+        if (o.ok) {
+          sfx('correct');
+          toast(reveal, 1600);
+          if (type === 'read' || type === 'pic2word' || type === 'letter') speakEn(w.en);
+          await sleep(650);
+          box.hidden = true;
+          resolve({ correct: true, ms });
+        } else {
+          b.classList.add('no');
+          sfx('wrong');
+          toast(reveal, 2600);
+          await speakEn(w.en);
+          sayHe(w.he);
+          await sleep(1100);
+          box.hidden = true;
+          resolve({ correct: false, ms });
+        }
+      };
+    });
+  }
+
+  // ================= כיוון בעיטה (החלקה או נגיעה) =================
+  function getAim() {
+    return new Promise((resolve) => {
+      const el = $('#aim');
+      el.hidden = false;
+      let start = null, done = false;
+      const finish = (pt) => {
+        if (done) return;
+        done = true;
+        el.hidden = true;
+        el.onpointerdown = el.onpointerup = null;
+        clearInterval(timer);
+        const s = Pitch.goalToScreen(pt.x, pt.y);
+        const mk = $('#aimMark');
+        mk.style.left = s.x + 'px'; mk.style.top = s.y + 'px';
+        mk.classList.remove('show'); void mk.offsetWidth; mk.classList.add('show');
+        resolve(pt);
+      };
+      el.onpointerdown = (e) => { start = { x: e.clientX, y: e.clientY }; };
+      el.onpointerup = (e) => {
+        if (!start) return;
+        const dx = e.clientX - start.x, dy = e.clientY - start.y;
+        if (Math.hypot(dx, dy) > 30) {
+          const W = window.innerWidth, H = window.innerHeight;
+          const gx = Math.max(-1, Math.min(1, dx / (W * 0.22))) * (Pitch.GW / 2 - 0.5);
+          const gy = Math.max(0.35, Math.min(Pitch.GH - 0.35, 0.5 + (-dy / (H * 0.35)) * 1.8));
+          finish({ x: gx, y: gy });
+        } else {
+          finish(Pitch.screenToGoal(e.clientX, e.clientY));
+        }
+      };
+      // בעיטה אוטומטית אם לא נגעו: לא מתקעים את המשחק
+      let left = 7;
+      const timer = setInterval(() => {
+        if (paused) return;
+        if (--left <= 0) finish({ x: pick([-1, 1]) * rand(1.6, 3), y: rand(0.6, 2) });
+      }, 1000);
+    });
+  }
+
+  // ================= משחק =================
+  let M = null, paused = false;
+  const ABORT = Symbol('abort');
+  const alive = (m) => { if (M !== m || m.aborted) throw ABORT; };
+
+  function nextWord() {
+    const w = M.queue.shift();
+    M.queue.push(w);
+    return w;
+  }
+  function requeue(w, correct) {
+    const i = M.queue.lastIndexOf(w);
+    if (i >= 0) M.queue.splice(i, 1);
+    if (correct) M.queue.push(w); else M.queue.splice(Math.min(2, M.queue.length), 0, w);
+  }
+  function answer(w, r) {
+    const first = !M.tried.has(w.key);
+    M.tried.add(w.key);
+    const ev = record(w, r.correct, first);
+    if (ev === 'mastered') M.mastered.push(w);
+    const pw = (M.perWord[w.key] = M.perWord[w.key] || [0, 0]);
+    r.correct ? (pw[0]++, M.right++) : (pw[1]++, M.wrong++);
+    requeue(w, r.correct);
+    if (r.correct) { M.streak++; addCoins(1); } else M.streak = 0;
+    persist();
+  }
+
+  async function giveItem(m) {
+    if (M.item) { addCoins(2); return; }
+    const s = $('#itemSlot');
+    const ids = Object.keys(ITEMS);
+    s.classList.add('spin');
+    for (let i = 0; i < 12; i++) { s.textContent = ITEMS[ids[i % ids.length]].emoji; sfx('tick'); await sleep(70 + i * 8); alive(m); }
+    s.classList.remove('spin');
+    M.item = pick(ids);
+    sfx('item');
+    updateItemSlot();
+    toast(`${ITEMS[M.item].emoji} <b>${ITEMS[M.item].name}</b><br><small>${ITEMS[M.item].tip} לוחצים עליו כדי להפעיל</small>`, 2800);
+    sayHe(ITEMS[M.item].name);
+  }
+
+  async function attackPlay(m, bonus = false) {
+    await Pitch.attackSetup(); alive(m);
+    const w = nextWord();
+    const turbo = M.armed === 'broom';
+    const r = await ask(w, turbo ? 2 : 3); alive(m);
+    if (turbo) { M.armed = null; updateItemSlot(); }
+    answer(w, r);
+    updateScore();
+    if (!r.correct) {
+      await Pitch.fumble(); alive(m);
+      banner(`🐺 ${settings().fetchDog} החזיר את הכדור!`, 'soft');
+      await sleep(500);
+      return;
+    }
+    const power = turbo || r.ms < 3500 ? 2 : 1;
+    Pitch.charge(true);
+    if (power > 1) banner('⚡ בעיטת על!', 'gold');
+    if (M.streak && M.streak % 3 === 0) giveItem(m).catch(() => {});
+    const aim = await getAim(); alive(m);
+    const wand = M.armed === 'wand';
+    let outcome = 'goal';
+    if (!wand && !bonus) {
+      const corner = Math.abs(aim.x) > 2.3 || aim.y > 1.8 ? 0.06 : 0;
+      const p = (power > 1 ? 0.9 : 0.74) + corner - difficulty();
+      if (Math.random() > p) outcome = Math.random() < 0.6 ? 'save' : 'post';
+    }
+    await Pitch.shoot({ tx: aim.x, ty: aim.y, outcome, power, curve: wand }); alive(m);
+    Pitch.charge(false);
+    if (wand) { M.armed = null; updateItemSlot(); }
+    if (outcome === 'goal') {
+      if (bonus) { addCoins(2); banner('🎯 GOAL!', 'gold'); await sleep(900); return; }
+      const goals = M.armed === 'snitch' ? 2 : 1;
+      if (M.armed === 'snitch') { M.armed = null; updateItemSlot(); }
+      M.home += goals; S.game.goals += goals;
+      addCoins(3);
+      updateScore();
+      banner(goals > 1 ? '✨ GOAL ×2!' : '⚽ GOAL!', 'goal');
+      await Pitch.celebrateGoal(); alive(m);
+    } else {
+      banner(outcome === 'save' ? '🧤 השוער תפס... כמעט!' : '🥅 בקורה! כמעט!', 'soft');
+      await sleep(900);
+    }
+  }
+
+  async function defensePlay(m) {
+    await Pitch.defenseSetup(); alive(m);
+    const w = nextWord();
+    const r = await ask(w, M.armed === 'broom' ? 2 : 3); alive(m);
+    if (M.armed === 'broom') { M.armed = null; updateItemSlot(); }
+    answer(w, r);
+    updateScore();
+    const dogName = settings().keeperDog;
+    let outcome;
+    if (r.correct) outcome = r.ms < 3000 ? 'clear' : 'save';
+    else if (M.armed === 'protego') { outcome = 'save'; M.armed = null; updateItemSlot(); banner('🛡️ פרוטגו!', 'gold'); }
+    else outcome = Math.random() < 0.45 + difficulty() ? 'goal' : 'post';
+    if (r.correct && M.streak && M.streak % 3 === 0) giveItem(m).catch(() => {});
+    await Pitch.oppShoot(outcome); alive(m);
+    if (outcome === 'goal') { M.away++; updateScore(); banner('😮 גול ליריב', 'soft'); }
+    else if (outcome === 'post') banner('🥅 בקורה! איזה מזל!', 'soft');
+    else banner(outcome === 'clear' ? `🐕 ${dogName} תפס והרחיק!` : `🐕 ${dogName} עצר!`, 'goal');
+    await sleep(700);
+  }
+
+  async function introWords(m, fresh) {
+    if (!fresh.length) return;
+    for (let i = 0; i < fresh.length; i++) {
+      const w = fresh[i];
+      introduce(w);
+      await new Promise((resolve) => {
+        openSheet(`
+          <div class="newcard">
+            <div class="nc-top">🆕 קלף חדש בקבוצה! <span>${i + 1}/${fresh.length}</span></div>
+            <div class="nc-pic">${picHtml(w)}</div>
+            <div class="nc-en" dir="ltr">${esc(w.en)}</div>
+            <div class="nc-he">${esc(w.he)}</div>
+            ${w.sentence ? `<div class="nc-sent" dir="ltr">${esc(w.sentence)}</div>` : ''}
+            <div class="btns">
+              <button class="round big" data-a="say" aria-label="השמע">🔊</button>
+              <button class="round big" data-a="slow" aria-label="לאט">🐢</button>
+              ${w.sentence ? '<button class="round big" data-a="sent" aria-label="משפט">💬</button>' : ''}
+              <button class="go" data-a="next">✔ הבא</button>
+            </div>
+          </div>`, 'card-sheet', (a) => {
+          if (a === 'say') speakEn(w.en);
+          if (a === 'slow') speakEn(w.en, 0.5);
+          if (a === 'sent') speakEn(w.sentence, 0.8);
+          if (a === 'next') { closeSheet(); resolve(); }
+        });
+        sfx('card');
+        speakEn(w.en).then(() => sayHe(w.he));
+      });
+      alive(m);
+    }
+    persist();
+  }
+
+  async function startMatch() {
+    audio();
+    closeSheet();
+    const st = settings();
+    const opp = league()[S.game.stage] || 'slytherin';
+    const { pool, fresh } = buildPool();
+    const m = (M = {
+      opp, half: 1, play: 0, plays: Math.max(4, Math.min(30, st.playsPerHalf | 0)), home: 0, away: 0,
+      queue: [], tried: new Set(), perWord: {},
+      streak: 0, item: null, armed: null, right: 0, wrong: 0, coins: 0, mastered: [], fresh,
+      start: Date.now(), aborted: false,
+    });
+    // מילים חדשות קודם, ואחריהן השאר (כדי שיופיעו מוקדם, כל עוד הן טריות בזיכרון)
+    M.queue = fresh.concat(shuffle(pool.filter((w) => !fresh.includes(w))));
+    Pitch.setTeams(st.house, opp);
+    applyLook();
+    setMode('match');
+    $('#homeName').textContent = HOUSE_INFO[st.house].crest;
+    $('#awayName').textContent = HOUSE_INFO[opp].crest;
+    updateScore(); updateItemSlot();
+    try {
+      await introWords(m, fresh);
+      setAmbience(true);
+      sfx('whistle');
+      banner(`${HOUSE_INFO[st.house].he} נגד ${HOUSE_INFO[opp].he}`, 'gold');
+      for (M.half = 1; M.half <= 2; M.half++) {
+        M.play = 0; updateScore();
+        const pattern = ['A', 'A', 'D'];
+        for (; M.play < M.plays; ) {
+          const kind = pattern[M.play % 3];
+          if (kind === 'A') await attackPlay(m); else await defensePlay(m);
+          M.play++; updateScore();
+        }
+        if (M.half === 1) await halftime(m);
+      }
+      sfx('whistle');
+      await finishMatch(m);
+    } catch (e) {
+      if (e !== ABORT) throw e;
+    }
+  }
+
+  async function halftime(m) {
+    sfx('whistle');
+    setAmbience(false);
+    await sleep(600); alive(m);
+    await new Promise((resolve) => {
+      openSheet(`
+        <div class="big">⏸️ מחצית!</div>
+        <div class="bigscore">${crest(settings().house)} <b>${M.home}</b> : <b>${M.away}</b> ${crest(M.opp)}</div>
+        <p class="sub">🎯 בונוס: 3 פנדלים מהירים. כל גול = 🪙2</p>
+        <div class="btns"><button class="go" data-a="go">▶ לבונוס!</button></div>`, '', (a) => { if (a === 'go') { closeSheet(); resolve(); } });
+    });
+    alive(m);
+    await KidsLearn.show(); alive(m);
+    for (let i = 0; i < 3; i++) await attackPlay(m, true);
+    setAmbience(true);
+    sfx('whistle');
+    banner('מחצית שנייה!', 'gold');
+  }
+
+  const TALK = [
+    'תגיד לאמא שלוש מילים באנגלית שלמדת היום!',
+    'אם ברטי היה יכול לדבר אנגלית, מה הוא היה אומר?',
+    'איזו מילה הייתה הכי קשה היום? בוא נגיד אותה יחד באנגלית.',
+    'איך אומרים באנגלית את השם של המשחק האהוב עליך?',
+    'איזה קלף זהב הכי שווה בארון שלך? למה?',
+  ];
+
+  async function finishMatch(m) {
+    setAmbience(false);
+    const st = settings();
+    const win = M.home > M.away, draw = M.home === M.away;
+    const minutes = Math.round((Date.now() - M.start) / 6000) / 10;
+    S.game.matches++;
+    let cupWon = false;
+    if (win) {
+      S.game.wins++;
+      S.game.stage++;
+      if (S.game.stage >= league().length) { cupWon = true; S.game.stage = 0; S.game.season++; }
+    }
+    addCoins(win ? (cupWon ? 50 : 10) : 4);
+    const d = new Date();
+    const hard = Object.entries(M.perWord).filter(([, v]) => v[1] > 0).map(([k]) => k);
+    const session = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      date: dayStr(d), time: `${pad(d.getHours())}:${pad(d.getMinutes())}`, minutes,
+      score: `${M.home}–${M.away}`, opponent: HOUSE_INFO[M.opp].he, right: M.right, wrong: M.wrong,
+      newWords: M.fresh.map((w) => w.en), hardWords: hard, words: Object.keys(M.perWord),
+    };
+    S.sessions.push(session);
+    S.sessions = S.sessions.slice(-80);
+    S.pending.push(session);
+    S.dirty = true;
+    persist();
+    pushNow();
+
+    Pitch.endSetup();
+    setMode('end');
+    sfx(win ? 'win' : 'crowd');
+    const cards = [...M.mastered.map((w) => ({ w, tier: 'gold' })), ...M.fresh.filter((w) => !M.mastered.includes(w)).map((w) => ({ w, tier: 'bronze' }))];
+    const title = cupWon ? '🏆 זכית בגביע!' : win ? 'ניצחון! 🎉' : draw ? 'תיקו! 🤝' : 'איזה משחק! 💪';
+    const sub = cupWon ? `${st.playerName || 'הקבוצה'} אלוף העונה! מתחילה עונה ${S.game.season}` : win ? 'עלית שלב בליגה!' : 'עוד משחק כזה ומנצחים. המילים שלמדת נשמרו!';
+    openSheet(`
+      <div class="trophy">${cupWon ? '🏆' : win ? '🥇' : '⚽'}</div>
+      <div class="big">${title}</div>
+      <div class="bigscore">${crest(st.house)} <b>${M.home}</b> : <b>${M.away}</b> ${crest(M.opp)}</div>
+      <p class="sub">${sub}</p>
+      <div class="stats"><span>✅ ${M.right}</span><span>🪙 +${M.coins}</span><span>⏱️ ${minutes} דק׳</span></div>
+      ${cards.length ? `<div class="newcards"><div class="lbl">${M.mastered.length ? '🌟 קלפי זהב חדשים!' : '🃏 קלפים חדשים'}</div><div class="cardrow">${cards.map(({ w, tier }) => cardHtml(w, tier)).join('')}</div></div>` : ''}
+      <p class="talk">💬 ${pick(TALK)}</p>
+      <div class="btns"><button class="go" data-a="again">⚽ עוד משחק</button><button class="ghost" data-a="home">🏠 לתפריט</button></div>`, 'end-sheet', (a, el) => {
+      if (a === 'again') startMatch();
+      if (a === 'home') goHome();
+      if (a === 'card') speakEn(el.dataset.en);
+    });
+    if (M.mastered.length) setTimeout(() => sfx('card'), 900);
+    await sleep(1600);
+    if (M === m) KidsLearn.show();
+  }
+
+  function goHome() {
+    if (M) M.aborted = true;
+    M = null;
+    paused = false;
+    Pitch.setPaused(false);
+    closeSheet();
+    $('#challenge').hidden = true;
+    $('#aim').hidden = true;
+    setAmbience(false);
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    Pitch.reset();
+    applyLook();
+    setMode('menu');
+    renderMenu();
+  }
+
+  function setPaused(p) {
+    paused = p;
+    Pitch.setPaused(p);
+    if (p && 'speechSynthesis' in window) speechSynthesis.cancel();
+  }
+
+  // ================= חלון כללי =================
+  let sheetHandler = null;
+  function openSheet(html, cls = '', handler = null) {
+    const s = $('#sheet');
+    s.className = 'overlay ' + cls;
+    $('#sheetBody').innerHTML = html;
+    s.hidden = false;
+    sheetHandler = handler;
+    $('#sheetBody').scrollTop = 0;
+  }
+  function closeSheet() { $('#sheet').hidden = true; sheetHandler = null; }
+  $('#sheetBody').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-a]');
+    if (!b || !sheetHandler) return;
+    audio();
+    sfx('click');
+    sheetHandler(b.dataset.a, b);
+  });
+
+  // ================= תפריט =================
+  function renderMenu() {
+    const st = settings();
+    const L = league();
+    $('#title').textContent = st.playerName ? `גביע הוגוורטס של ${st.playerName}` : 'גביע הוגוורטס';
+    $('#subtitle').textContent = `${HOUSE_INFO[st.house].crest} ${HOUSE_INFO[st.house].he} · עונה ${S.game.season}`;
+    $('#ladder').innerHTML = L.map((h, i) => {
+      const cls = i < S.game.stage ? 'won' : i === S.game.stage ? 'next' : '';
+      return `<div class="step ${cls}">${crest(h)}<small>${i === L.length - 1 ? '🏆 גמר' : HOUSE_INFO[h].he}</small>${i < S.game.stage ? '<b>✔</b>' : ''}</div>`;
+    }).join('<i class="arrow">◀</i>');
+    const opp = L[S.game.stage];
+    $('#playBtn').innerHTML = `⚽ משחק נגד ${HOUSE_INFO[opp].he}`;
+    const gold = Object.values(S.words).filter((p) => p.mastered).length;
+    $('#cardsBtn').innerHTML = `🃏 קלפים <small>${gold}</small>`;
+    updateCoins();
+    Pitch.setTeams(st.house, opp);
+    applyLook();
+  }
+
+  // ================= ארון קלפים =================
+  function tierOf(p) {
+    if (!p || !p.seen) return 'locked';
+    if (p.mastered) return 'gold';
+    if (p.box >= 3) return 'silver';
+    return 'bronze';
+  }
+  function cardHtml(w, tier) {
+    if (tier === 'locked') return `<button class="wcard locked" aria-label="קלף נעול"><span class="q">?</span></button>`;
+    return `<button class="wcard ${tier}" data-a="card" data-en="${esc(w.en)}" data-he="${esc(w.he)}"><span class="pic">${picHtml(w)}</span><span class="en" dir="ltr">${esc(w.en)}</span><span class="hb">${esc(w.he)}</span></button>`;
+  }
+  let cardsPack = 'all';
+  function openCards() {
+    const words = allWords();
+    const packs = [...new Set(words.map((w) => w.pack))];
+    const list = cardsPack === 'all' ? words : words.filter((w) => w.pack === cardsPack);
+    const order = { gold: 0, silver: 1, bronze: 2, locked: 3 };
+    const sorted = list.map((w) => ({ w, t: tierOf(S.words[w.key]) })).sort((a, b) => order[a.t] - order[b.t]);
+    const gold = words.filter((w) => tierOf(S.words[w.key]) === 'gold').length;
+    openSheet(`
+      <div class="sheet-head"><h2>🃏 ארון הקלפים</h2><span class="pill">🌟 ${gold}/${words.length}</span><button class="round" data-a="close" aria-label="סגירה">✖</button></div>
+      <p class="hint">🥉 חדש · 🥈 כמעט · 🥇 זהב = ידעת ב-3 ימים שונים. לוחצים על קלף כדי לשמוע.</p>
+      <div class="tabs">${['all', ...packs].map((p) => `<button class="chip ${p === cardsPack ? 'on' : ''}" data-a="pack" data-p="${esc(p)}">${p === 'all' ? 'הכול' : esc(p)}</button>`).join('')}</div>
+      <div class="cardgrid">${sorted.map(({ w, t }) => cardHtml(w, t)).join('')}</div>`, 'panel-sheet', (a, el) => {
+      if (a === 'close') closeSheet();
+      if (a === 'pack') { cardsPack = el.dataset.p; openCards(); }
+      if (a === 'card') { el.classList.toggle('flip'); speakEn(el.dataset.en); }
+    });
+  }
+
+  // ================= חנות =================
+  function openShop() {
+    const items = SHOP();
+    const e = S.game.equip;
+    openSheet(`
+      <div class="sheet-head"><h2>🛒 החנות של דיאגון</h2><span class="pill">🪙 ${S.game.coins}</span><button class="round" data-a="close" aria-label="סגירה">✖</button></div>
+      <p class="hint">קונים פעם אחת, ואז לוחצים כדי ללבוש או להוריד.</p>
+      <div class="shopgrid">${items.map((it) => {
+        const owned = S.game.owned.includes(it.id);
+        const on = owned && (it.val ? e[it.slot] === it.val : !!e[it.slot]);
+        const can = S.game.coins >= it.price;
+        return `<button class="shopitem ${owned ? 'owned' : ''} ${on ? 'on' : ''} ${!owned && !can ? 'cant' : ''}" data-a="item" data-id="${it.id}">
+          <span class="emo">${it.emoji}</span><span class="nm">${esc(it.name)}</span>
+          <span class="pr">${on ? '✔ לבוש' : owned ? 'ללבוש' : '🪙 ' + it.price}</span></button>`;
+      }).join('')}</div>`, 'panel-sheet shop-sheet', (a, el) => {
+      if (a === 'close') { closeSheet(); return; }
+      if (a !== 'item') return;
+      const it = items.find((x) => x.id === el.dataset.id);
+      if (!S.game.owned.includes(it.id)) {
+        if (S.game.coins < it.price) { toast(`עוד ${it.price - S.game.coins} 🪙 וזה שלך!`); sfx('wrong'); return; }
+        S.game.coins -= it.price;
+        S.game.owned.push(it.id);
+        sfx('item');
+        e[it.slot] = it.val || true;
+      } else {
+        const on = it.val ? e[it.slot] === it.val : !!e[it.slot];
+        if (on) delete e[it.slot]; else e[it.slot] = it.val || true;
+      }
+      S.dirty = true;
+      persist();
+      applyLook();
+      updateCoins();
+      openShop();
+    });
+  }
+
+  // ================= מסך הורים =================
+  function parentGate() {
+    const a = 6 + Math.floor(Math.random() * 4), b = 6 + Math.floor(Math.random() * 4);
+    openSheet(`
+      <div class="sheet-head"><h2>🔒 להורים</h2><button class="round" data-a="close" aria-label="סגירה">✖</button></div>
+      <p class="sub">כמה זה ${a} × ${b}?</p>
+      <input id="gateIn" class="gate" inputmode="numeric" autocomplete="off" />
+      <div class="btns"><button class="go" data-a="ok">כניסה</button></div>`, 'panel-sheet small', (act) => {
+      if (act === 'close') closeSheet();
+      if (act === 'ok') {
+        if (+$('#gateIn').value === a * b) openParents('progress');
+        else { $('#gateIn').value = ''; $('#gateIn').classList.add('shake'); setTimeout(() => $('#gateIn').classList.remove('shake'), 400); }
+      }
+    });
+    setTimeout(() => $('#gateIn') && $('#gateIn').focus(), 100);
+    $('#gateIn').onkeydown = (e) => { if (e.key === 'Enter') sheetHandler('ok'); };
+  }
+
+  function statsSummary() {
+    const words = allWords();
+    const t = today(), weekAgo = addDays(t, -6);
+    const sess = S.sessions;
+    const minToday = sess.filter((s) => s.date === t).reduce((a, s) => a + s.minutes, 0);
+    const minWeek = sess.filter((s) => s.date >= weekAgo).reduce((a, s) => a + s.minutes, 0);
+    const vals = words.map((w) => ({ w, p: S.words[w.key] }));
+    const mastered = vals.filter((v) => v.p && v.p.mastered).length;
+    const learning = vals.filter((v) => v.p && v.p.seen && !v.p.mastered).length;
+    const hard = vals.filter((v) => isHard(v.p));
+    return { words, vals, minToday: Math.round(minToday), minWeek: Math.round(minWeek), mastered, learning, rest: words.length - mastered - learning, hard, games: sess.length };
+  }
+
+  let parentTab = 'progress';
+  function openParents(tab = parentTab) {
+    parentTab = tab;
+    const st = settings();
+    const tabs = `<div class="tabs">${[['progress', '📊 התקדמות'], ['sheet', '🔗 גיליון'], ['settings', '⚙️ הגדרות']].map(([k, l]) => `<button class="chip ${k === tab ? 'on' : ''}" data-a="tab" data-t="${k}">${l}</button>`).join('')}</div>`;
+    let body = '';
+    if (tab === 'progress') {
+      const s = statsSummary();
+      const status = (p) => (!p || !p.seen ? ['עוד לא', 'none'] : p.mastered ? ['נשלטה ✅', 'gold'] : isHard(p) ? ['קשה ⚠️', 'hard'] : ['בלמידה 📘', 'learn']);
+      const order = { hard: 0, learn: 1, gold: 2, none: 3 };
+      const rows = s.vals.map((v) => ({ ...v, st: status(v.p) })).sort((a, b) => order[a.st[1]] - order[b.st[1]]);
+      body = `
+        <div class="tiles">
+          <div class="tile"><b>${s.minToday}</b><span>דקות היום</span></div>
+          <div class="tile"><b>${s.minWeek}</b><span>דקות השבוע</span></div>
+          <div class="tile"><b>${s.games}</b><span>משחקים</span></div>
+          <div class="tile gold"><b>${s.mastered}</b><span>מילים נשלטו</span></div>
+          <div class="tile"><b>${s.learning}</b><span>בלמידה</span></div>
+          <div class="tile"><b>${s.rest}</b><span>עוד לא הגיעו</span></div>
+        </div>
+        <h3>⚠️ מילים קשות (כדאי לתרגל יחד)</h3>
+        <p>${s.hard.length ? s.hard.map((v) => `<b dir="ltr">${esc(v.w.en)}</b> (${esc(v.w.he)})`).join(' · ') : 'אין כרגע 🎉'}</p>
+        <h3>📅 משחקים אחרונים</h3>
+        <table class="tbl"><tr><th>תאריך</th><th>דקות</th><th>תוצאה</th><th>✅</th><th>✗</th></tr>
+        ${S.sessions.slice(-7).reverse().map((x) => `<tr><td>${x.date} ${x.time}</td><td>${x.minutes}</td><td>${x.score}</td><td>${x.right}</td><td>${x.wrong}</td></tr>`).join('') || '<tr><td colspan="5">עוד אין משחקים</td></tr>'}
+        </table>
+        <h3>📚 כל המילים</h3>
+        <table class="tbl"><tr><th>English</th><th>עברית</th><th>מצב</th><th>שלב</th><th>✅</th><th>✗</th></tr>
+        ${rows.map((r) => `<tr class="${r.st[1]}"><td dir="ltr">${esc(r.w.en)}</td><td>${esc(r.w.he)}</td><td>${r.st[0]}</td><td>${r.p && r.p.seen ? '⭐'.repeat(r.p.box) || '·' : ''}</td><td>${r.p ? r.p.right : 0}</td><td>${r.p ? r.p.wrong : 0}</td></tr>`).join('')}
+        </table>`;
+    } else if (tab === 'sheet') {
+      const ok = Sheet.connected;
+      const last = S.lastSync ? new Date(S.lastSync).toLocaleString('he-IL') : '—';
+      const connectLink = ok ? location.origin + location.pathname + '#connect=' + encodeURIComponent(Sheet.url) : '';
+      body = `
+        <p class="status ${ok ? 'on' : ''}">${ok ? '✅ מחובר לגיליון' : '⚪ לא מחובר — הכול נשמר רק במכשיר הזה'}</p>
+        ${ok ? `<p>סנכרון אחרון: ${last}${S.pending.length ? ` · ממתינים לשליחה: ${S.pending.length}` : ''}</p>
+          <div class="btns">
+            <button class="go" data-a="sync">🔄 סנכרן עכשיו</button>
+            ${content.sheetUrl ? `<a class="ghost btnlink" href="${esc(content.sheetUrl)}" target="_blank" rel="noopener">📄 פתח את הגיליון</a>` : ''}
+          </div>
+          <h3>📱 לחבר מכשיר נוסף</h3>
+          <p class="hint">פותחים את הקישור הזה במכשיר השני (או סורקים/שולחים בווטסאפ):</p>
+          <input class="url" readonly value="${esc(connectLink)}" onclick="this.select()" />
+          <div class="btns"><button class="ghost" data-a="copy">📋 העתק קישור</button><button class="ghost" data-a="disconnect">ניתוק</button></div>`
+        : `<p class="hint">מדביקים כאן את קישור הסקריפט מהגיליון (בגיליון: ⚽ גביע הוגוורטס ← 🔗 קישור חיבור למשחק).</p>
+          <input id="urlIn" class="url" placeholder="https://script.google.com/macros/s/.../exec" />
+          <div class="btns"><button class="go" data-a="connect">🔗 חיבור</button></div>`}`;
+    } else {
+      body = Sheet.connected
+        ? `<p class="hint">ההגדרות נקבעות בגיליון, בלשונית ⚙️ הגדרות.</p>
+           <table class="tbl"><tr><td>שם</td><td>${esc(st.playerName) || '—'}</td></tr><tr><td>בית</td><td>${HOUSE_INFO[st.house].he}</td></tr>
+           <tr><td>מילים חדשות בכל משחק</td><td>${st.newPerMatch}</td></tr><tr><td>מהלכים בכל מחצית</td><td>${st.playsPerHalf}</td></tr></table>`
+        : `<label class="field">שם השחקן <input id="setName" value="${esc(st.playerName)}" maxlength="20" /></label>
+           <div class="field">הבית <div class="tabs">${Object.keys(HOUSE_INFO).filter((h) => h !== 'durmstrang').map((h) => `<button class="chip ${h === st.house ? 'on' : ''}" data-a="house" data-h="${h}">${HOUSE_INFO[h].crest} ${HOUSE_INFO[h].he}</button>`).join('')}</div></div>
+           <div class="btns"><button class="go" data-a="saveSettings">💾 שמירה</button></div>
+           <p class="hint">אחרי חיבור לגיליון, ההגדרות יילקחו משם.</p>`;
+      body += `<h3>📖 הסברים בכרטיסי "הידעת?"</h3><p class="hint">רמת ההסבר נבחרת באלבום 📖 (🐣/🧒/🧑).</p>`;
+    }
+    openSheet(`<div class="sheet-head"><h2>🔒 מסך הורים</h2><button class="round" data-a="close" aria-label="סגירה">✖</button></div>${tabs}${body}`, 'panel-sheet parents', async (a, el) => {
+      if (a === 'close') { closeSheet(); renderMenu(); }
+      if (a === 'tab') openParents(el.dataset.t);
+      if (a === 'house') { S.localSettings.house = el.dataset.h; persist(); openParents('settings'); }
+      if (a === 'saveSettings') { S.localSettings.playerName = $('#setName').value.trim(); persist(); toast('נשמר ✔'); renderMenu(); }
+      if (a === 'connect') {
+        const u = $('#urlIn').value.trim();
+        if (!Sheet.valid(u)) { toast('הקישור צריך להתחיל ב-https://script.google.com/macros/s/ ולהסתיים ב-/exec'); return; }
+        Sheet.setUrl(u);
+        toast('🔄 מתחבר...');
+        const ok = await syncNow();
+        toast(ok ? '✅ מחובר! המילים בגיליון' : '⚠️ לא הצלחתי להתחבר. בדקו שהסקריפט פורסם לגישת "כל אחד"', 4000);
+        openParents('sheet');
+      }
+      if (a === 'sync') { toast('🔄 מסנכרן...'); const ok = await syncNow(); toast(ok ? '✅ מסונכרן' : '⚠️ אין חיבור. ננסה שוב בפעם הבאה'); openParents('sheet'); }
+      if (a === 'copy') { const i = $('.url'); i.select(); try { await navigator.clipboard.writeText(i.value); toast('הועתק ✔'); } catch (e) { document.execCommand('copy'); toast('הועתק ✔'); } }
+      if (a === 'disconnect') { Sheet.setUrl(''); openParents('sheet'); renderMenu(); }
+    });
+  }
+
+  // ================= סנכרון =================
+  function mergeWord(a, b) {
+    if (!a) return b; if (!b) return a;
+    const later = (a.last || '') >= (b.last || '') ? a : b;
+    return {
+      box: Math.max(a.box || 0, b.box || 0), right: Math.max(a.right || 0, b.right || 0), wrong: Math.max(a.wrong || 0, b.wrong || 0),
+      days: [...new Set([...(a.days || []), ...(b.days || [])])].sort(),
+      last: later.last || '', due: later.due || '', lastUp: [a.lastUp || '', b.lastUp || ''].sort().pop(),
+      mastered: [a.mastered, b.mastered].filter(Boolean).sort()[0] || '', seen: !!(a.seen || b.seen), he: a.he || b.he || '',
+    };
+  }
+  function mergeRemote(r) {
+    if (!r) return false;
+    const before = JSON.stringify([S.words, S.game]);
+    const keys = new Set([...Object.keys(S.words), ...Object.keys(r.words || {})]);
+    keys.forEach((k) => (S.words[k] = mergeWord(S.words[k], (r.words || {})[k])));
+    const rg = r.game || {};
+    if ((rg.matches || 0) > (S.game.matches || 0)) {
+      const owned = [...new Set([...(S.game.owned || []), ...(rg.owned || [])])];
+      S.game = Object.assign(freshState().game, rg, { owned });
+    } else {
+      S.game.owned = [...new Set([...(S.game.owned || []), ...(rg.owned || [])])];
+    }
+    return before !== JSON.stringify([S.words, S.game]);
+  }
+  const exportState = () => ({ words: S.words, game: S.game, updated: Date.now() });
+
+  let syncing = false;
+  async function pushNow() {
+    if (!Sheet.connected || syncing) return false;
+    syncing = true;
+    try {
+      if (!S.pending.length) await Sheet.push(exportState(), null);
+      while (S.pending.length) {
+        await Sheet.push(exportState(), S.pending[0]);
+        S.pending.shift();
+        persist();
+      }
+      S.dirty = false; S.lastSync = Date.now(); persist();
+      return true;
+    } catch (e) {
+      return false;
+    } finally {
+      syncing = false;
+    }
+  }
+  async function syncNow() {
+    if (!Sheet.connected) return false;
+    try {
+      const r = await Sheet.pull();
+      if (!r.words || !r.words.length) {
+        await Sheet.seed(DEFAULT_WORDS);
+        r.words = DEFAULT_WORDS;
+      }
+      content = { settings: r.settings || {}, words: r.words, sheetUrl: r.sheetUrl || '', at: Date.now() };
+      saveContent();
+      const changed = mergeRemote(r.state);
+      persist();
+      if (!M) renderMenu();
+      if (changed || S.dirty || !r.state || S.pending.length) await pushNow();
+      S.lastSync = Date.now(); persist();
+      return true;
+    } catch (e) {
+      console.warn('sync failed', e);
+      return false;
+    }
+  }
+
+  // ================= אתחול =================
+  Pitch.init($('#view'), sfx);
+  Pitch.setLook({});
+  KidsLearn.init({
+    gameId: 'hogwarts-cup', facts: FACTS, level: 'big',
+    isMuted: () => S.muted,
+    onOpen: () => setPaused(true),
+    onClose: () => setPaused(false),
+  });
+  KidsLearn.addAlbumButton($('#tools'));
+
+  $('#muteBtn').onclick = () => { audio(); setMuted(!S.muted); };
+  $('#pauseBtn').onclick = () => {
+    if (!M) return;
+    setPaused(true);
+    openSheet(`<div class="big">⏸️ הפסקה</div><div class="btns"><button class="go" data-a="resume">▶ ממשיכים</button><button class="ghost" data-a="home">🏠 לתפריט</button></div>`, '', (a) => {
+      if (a === 'resume') { closeSheet(); setPaused(false); }
+      if (a === 'home') goHome();
+    });
+  };
+  $('#itemSlot').onclick = () => {
+    if (!M || !M.item || M.armed) return;
+    M.armed = M.item; M.item = null;
+    sfx('item');
+    banner(`${ITEMS[M.armed].emoji} ${ITEMS[M.armed].name}!`, 'gold');
+    updateItemSlot();
+  };
+  $('#playBtn').onclick = () => { audio(); startMatch(); };
+  $('#cardsBtn').onclick = () => { audio(); openCards(); };
+  $('#shopBtn').onclick = () => { audio(); openShop(); };
+  $('#parentsBtn').onclick = () => { audio(); parentGate(); };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'm' || e.key === 'M') setMuted(!S.muted);
+    if ($('#challenge').hidden || !/^[1-3]$/.test(e.key)) return;
+    const b = $('#chOptions').children[+e.key - 1];
+    b && b.click();
+  });
+  window.addEventListener('online', () => S.pending.length && pushNow());
+  document.addEventListener('visibilitychange', () => { if (document.hidden && M && !paused && $('#sheet').hidden) $('#pauseBtn').click(); });
+
+  setMuted(!!S.muted);
+  setMode('menu');
+  renderMenu();
+  const justConnected = Sheet.readHash();
+  if (Sheet.connected) syncNow().then((ok) => justConnected && toast(ok ? '✅ המכשיר חובר לגיליון!' : '⚠️ החיבור לגיליון נכשל', 3500));
+})();
+
+</script>
+  <script>
+    if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  </script>
+</body>
+</html>
