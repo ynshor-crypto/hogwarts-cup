@@ -1,7 +1,6 @@
 {
   "name": "גביע הוגוורטס",
   "short_name": "גביע הוגוורטס",
-  "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
   "orientation": "any",

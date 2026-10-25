@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>הקמת הגיליון</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Varela+Round&display=swap" />
+  <style>
+    :root {
+      --bg: #f7f1e3; --card: #fffdf7; --ink: #2a1a10; --muted: #6f5d4e; --line: #e6dcc4;
+      --red: #8e1b1b; --gold: #e8b52f; --gold-l: #fff1c2; --ok: #2f8f4a; --ok-l: #e3f5e8; --warn-l: #fff4e0;
+      --code: #1f1a17; --code-ink: #f3e9d2;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #1b1512; --card: #261e19; --ink: #f3e9d9; --muted: #b9a998; --line: #3d322a;
+        --red: #ff8a7a; --gold: #f2c14e; --gold-l: #3a2f15; --ok: #6fd28b; --ok-l: #1d3324; --warn-l: #3a2c14;
+        --code: #120e0c; --code-ink: #f3e9d2;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #1b1512; --card: #261e19; --ink: #f3e9d9; --muted: #b9a998; --line: #3d322a;
+      --red: #ff8a7a; --gold: #f2c14e; --gold-l: #3a2f15; --ok: #6fd28b; --ok-l: #1d3324; --warn-l: #3a2c14;
+      --code: #120e0c; --code-ink: #f3e9d2;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Varela Round', system-ui, sans-serif; font-size: 18px; line-height: 1.6; }
+    main { max-width: 760px; margin: 0 auto; padding: 28px 16px 80px; }
+    header { text-align: center; margin-bottom: 26px; }
+    header .logo { font-size: 46px; }
+    h1 { font-family: 'Secular One', sans-serif; color: var(--red); font-size: clamp(28px, 6vw, 40px); margin: 4px 0; line-height: 1.2; }
+    header p { color: var(--muted); margin: 6px 0 0; }
+    .need { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
+    .need span { background: var(--card); border: 1px solid var(--line); border-radius: 30px; padding: 4px 14px; font-size: 16px; }
+    .progress { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 0; margin-bottom: 8px; }
+    .bar { height: 10px; border-radius: 10px; background: var(--line); overflow: hidden; }
+    .bar i { display: block; height: 100%; width: 0; background: var(--ok); transition: width 0.3s; }
+    .progress small { display: block; text-align: center; color: var(--muted); font-size: 14px; margin-top: 4px; }
+    .step { background: var(--card); border: 2px solid var(--line); border-radius: 20px; padding: 18px 20px 16px; margin: 16px 0; transition: border-color 0.2s, background 0.2s; }
+    .step.done { border-color: var(--ok); background: var(--ok-l); }
+    .step h2 { display: flex; align-items: center; gap: 12px; margin: 0 0 8px; font-family: 'Secular One', sans-serif; font-size: 23px; line-height: 1.3; }
+    .num { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--red); color: #fff; display: grid; place-items: center; font-size: 20px; }
+    .step.done .num { background: var(--ok); }
+    .step.done .num b { display: none; }
+    .step.done .num::after { content: '✓'; }
+    ol, ul { margin: 6px 0; padding-inline-start: 24px; }
+    li { margin: 6px 0; }
+    .path { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+    .ui { display: inline-block; background: var(--gold-l); border: 1px solid var(--gold); border-radius: 8px; padding: 0 8px; font-weight: bold; white-space: nowrap; }
+    .en { color: var(--muted); font-size: 15px; direction: ltr; unicode-bidi: isolate; }
+    kbd { font-family: inherit; background: var(--card); border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 6px; padding: 0 6px; font-size: 15px; direction: ltr; unicode-bidi: isolate; }
+    .note { background: var(--warn-l); border-radius: 12px; padding: 10px 14px; font-size: 16px; margin: 10px 0; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; border: 0; cursor: pointer; font-family: 'Secular One', sans-serif; font-size: 19px; padding: 12px 22px; border-radius: 40px; background: var(--gold); color: #2a1a10; text-decoration: none; box-shadow: 0 4px 0 #b8861a; }
+    .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #b8861a; }
+    .btn.secondary { background: var(--card); color: var(--ink); border: 2px solid var(--line); box-shadow: none; }
+    .btn.copied { background: var(--ok); color: #fff; box-shadow: none; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0 4px; }
+    .check { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); cursor: pointer; font-size: 17px; user-select: none; }
+    .check input { width: 24px; height: 24px; accent-color: var(--ok); }
+    textarea.code { width: 100%; height: 130px; margin-top: 10px; background: var(--code); color: var(--code-ink); border: 0; border-radius: 12px; padding: 12px; font: 13px/1.4 ui-monospace, Menlo, monospace; direction: ltr; resize: vertical; }
+    input.url { width: 100%; font: 16px ui-monospace, Menlo, monospace; direction: ltr; padding: 12px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); color: var(--ink); }
+    input.url.bad { border-color: #d9534f; }
+    .err { color: #d9534f; font-size: 15px; min-height: 1.4em; }
+    .qrbox { display: none; text-align: center; margin-top: 14px; }
+    .qrbox.show { display: block; }
+    #qr { display: inline-block; background: #fff; padding: 14px; border-radius: 16px; }
+    #qr img, #qr canvas { display: block; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+    .grid2 > div { background: var(--bg); border-radius: 14px; padding: 10px 14px; font-size: 16px; }
+    .grid2 h3 { margin: 0 0 4px; font-size: 17px; }
+    footer { text-align: center; color: var(--muted); font-size: 15px; margin-top: 30px; }
+    @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } .step { padding: 16px 14px; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="logo">⚽🧙</div>
+    <h1>הקמת הגיליון של "גביע הוגוורטס"</h1>
+    <p>בגיליון הזה תוכלו לעדכן את המילים שהילד לומד ולראות את ההתקדמות שלו. עושים את זה פעם אחת, במחשב.</p>
+    <div class="need"><span>💻 מחשב</span><span>📧 חשבון Google (Gmail)</span><span>⏱️ כ-10 דקות</span><span>📱 הטאבלט של הילד, לשלב האחרון</span></div>
+  </header>
+
+  <div class="progress" aria-live="polite"><div class="bar"><i id="bar"></i></div><small id="barText">0 מתוך 6 שלבים</small></div>
+
+  <section class="step" data-step="1">
+    <h2><span class="num"><b>1</b></span>יוצרים גיליון חדש</h2>
+    <ol>
+      <li>לוחצים על הכפתור. נפתח גיליון Google ריק בלשונית חדשה.</li>
+      <li>אם Google מבקשת להתחבר, מתחברים עם חשבון ה-Gmail שלכם.</li>
+      <li>בפינה הימנית העליונה, איפה שכתוב <span class="ui">גיליון אלקטרוני ללא שם</span>, כותבים שם, למשל <b>גביע הוגוורטס</b>.</li>
+    </ol>
+    <div class="row"><a class="btn" href="https://sheets.new" target="_blank" rel="noopener">📄 פתיחת גיליון חדש</a></div>
+    <label class="check"><input type="checkbox" />יצרתי גיליון ונתתי לו שם</label>
+  </section>
+
+  <section class="step" data-step="2">
+    <h2><span class="num"><b>2</b></span>פותחים את עורך הסקריפטים</h2>
+    <ol>
+      <li>בתפריט העליון של הגיליון לוחצים: <span class="path"><span class="ui">תוספים</span> ← <span class="ui">Apps Script</span></span> <span class="en">(Extensions → Apps Script)</span></li>
+      <li>נפתחת לשונית חדשה עם עורך קוד. יש בו כמה שורות שמתחילות ב-<code>function myFunction</code>.</li>
+    </ol>
+    <div class="note">💡 אם אין בתפריט "תוספים", מחפשים "הרחבות". השם תלוי בגרסה של Google.</div>
+    <label class="check"><input type="checkbox" />העורך פתוח</label>
+  </section>
+
+  <section class="step" data-step="3">
+    <h2><span class="num"><b>3</b></span>מדביקים את הסקריפט ושומרים</h2>
+    <ol>
+      <li>לוחצים <b>"העתקת הסקריפט"</b> כאן למטה.</li>
+      <li>חוזרים לעורך, לוחצים בתוך הקוד ומסמנים הכול: <kbd>Ctrl</kbd>+<kbd>A</kbd> (במק: <kbd>⌘</kbd>+<kbd>A</kbd>).</li>
+      <li>מדביקים במקום: <kbd>Ctrl</kbd>+<kbd>V</kbd> (במק: <kbd>⌘</kbd>+<kbd>V</kbd>). הקוד הישן נעלם והחדש מופיע.</li>
+      <li>שומרים: <kbd>Ctrl</kbd>+<kbd>S</kbd> (במק: <kbd>⌘</kbd>+<kbd>S</kbd>), או לוחצים על סמל הדיסקט 💾.</li>
+    </ol>
+    <div class="row"><button class="btn" id="copyCode">📋 העתקת הסקריפט</button></div>
+    <textarea class="code" id="code" readonly aria-label="הסקריפט">/**
+ * גביע הוגוורטס — חיבור בין המשחק לגיליון Google של ההורים.
+ * מדביקים את כל הקובץ ב: הרחבות ← Apps Script, מריצים setup פעם אחת, ופורסים כ"אפליקציית אינטרנט".
+ * מדריך מלא: docs/setup-google-sheet.md
+ *
+ * המשחק קורא (GET ?a=pull): הגדרות, מילים, מצב שמור, יומן אחרון.
+ * המשחק כותב (POST): a=seed (מילים התחלתיות לגיליון ריק), a=push (מצב + משחק שהסתיים).
+ */
+
+const TABS = {
+  help: '📖 הוראות',
+  words: '📚 מילים',
+  settings: '⚙️ הגדרות',
+  summary: '🏆 סיכום',
+  progress: '📊 התקדמות',
+  log: '📝 יומן משחקים',
+  state: '_state',
+};
+
+const WORD_HEADERS = ['נושא', 'English', 'עברית', 'תמונה (אימוג׳י)', 'משפט לדוגמה', 'פעיל'];
+const LOG_HEADERS = ['תאריך', 'שעה', 'דקות', 'תוצאה', 'יריב', 'תשובות נכונות', 'טעויות', 'מילים חדשות', 'מילים שהיו קשות', 'מילים שתורגלו'];
+const PROGRESS_HEADERS = ['English', 'עברית', 'נושא', 'מצב', 'שלב', 'נכון', 'טעויות', 'ימים שהצליח', 'פעם אחרונה'];
+
+// מפתח פנימי ← [תווית בגיליון, ברירת מחדל, הסבר]
+const SETTINGS = [
+  ['playerName', 'שם השחקן', '', 'כתבו כאן את שם הילד. מופיע במשחק'],
+  ['house', 'הבית', 'גריפינדור', 'גריפינדור / סלית׳רין / הפלפאף / רייבנקלו'],
+  ['newPerMatch', 'מילים חדשות בכל משחק', 5, 'מומלץ 3–6'],
+  ['playsPerHalf', 'מהלכים בכל מחצית', 12, '12 ≈ משחק של 10–12 דקות. פחות = משחק קצר יותר'],
+  ['keeperDog', 'הכלב בשער', 'ברטי', ''],
+  ['fetchDog', 'הכלב שמחזיר כדורים', 'סקאי', ''],
+];
+const HOUSES = { 'גריפינדור': 'gryffindor', 'סלית׳רין': 'slytherin', "סלית'רין": 'slytherin', 'הפלפאף': 'hufflepuff', 'רייבנקלו': 'ravenclaw' };
+
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('⚽ גביע הוגוורטס')
+    .addItem('הכנת הגיליון (פעם אחת)', 'setup')
+    .addItem('🔗 קישור חיבור למשחק', 'showConnectLink')
+    .addToUi();
+}
+
+// ---------- הכנה ----------
+function setup() {
+  const ss = SpreadsheetApp.getActive();
+  const sh = (name) =&gt; ss.getSheetByName(name) || ss.insertSheet(name);
+
+  const help = sh(TABS.help);
+  writeHelp(help);
+
+  const words = sh(TABS.words);
+  if (words.getLastRow() === 0) words.appendRow(WORD_HEADERS);
+  styleHeader(words, WORD_HEADERS.length);
+  words.setColumnWidths(1, 1, 90).setColumnWidth(2, 120).setColumnWidth(3, 110).setColumnWidth(4, 110).setColumnWidth(5, 220).setColumnWidth(6, 60);
+
+  const settings = sh(TABS.settings);
+  if (settings.getLastRow() === 0) {
+    settings.appendRow(['הגדרה', 'ערך', 'הסבר']);
+    SETTINGS.forEach(([, label, def, note]) =&gt; settings.appendRow([label, def, note]));
+  }
+  styleHeader(settings, 3);
+  settings.setColumnWidth(1, 180).setColumnWidth(2, 140).setColumnWidth(3, 340);
+  settings.getRange('B3').setDataValidation(SpreadsheetApp.newDataValidation()
+    .requireValueInList(['גריפינדור', 'סלית׳רין', 'הפלפאף', 'רייבנקלו'], true).build());
+
+  const summary = sh(TABS.summary);
+  if (summary.getLastRow() === 0) summary.getRange('A1').setValue('הסיכום יתמלא אחרי המשחק הראשון ⚽');
+
+  const progress = sh(TABS.progress);
+  if (progress.getLastRow() === 0) progress.appendRow(PROGRESS_HEADERS);
+  styleHeader(progress, PROGRESS_HEADERS.length);
+
+  const log = sh(TABS.log);
+  if (log.getLastRow() === 0) log.appendRow(LOG_HEADERS);
+  styleHeader(log, LOG_HEADERS.length);
+
+  const state = sh(TABS.state);
+  state.hideSheet();
+
+  [help, words, settings, summary, progress, log].forEach((s, i) =&gt; { s.setRightToLeft(true); ss.setActiveSheet(s); ss.moveActiveSheet(i + 1); });
+  const def = ss.getSheetByName('Sheet1') || ss.getSheetByName('גיליון1');
+  if (def &amp;&amp; def.getLastRow() === 0 &amp;&amp; ss.getSheets().length &gt; 1) ss.deleteSheet(def);
+  ss.setActiveSheet(help);
+}
+
+function styleHeader(s, n) {
+  s.setFrozenRows(1);
+  s.getRange(1, 1, 1, n).setFontWeight('bold').setBackground('#7a1f1f').setFontColor('#ffd35a');
+}
+
+function writeHelp(s) {
+  s.clear();
+  const rows = [
+    ['⚽ גביע הוגוורטס — הוראות להורים'],
+    [''],
+    ['📚 מילים: כל שורה היא מילה במשחק.'],
+    ['   • נושא: שם קבוצת המילים (למשל Football, או "שיעור 5"). אפשר להמציא נושא חדש.'],
+    ['   • English: המילה באנגלית (חובה). עברית: התרגום (חובה).'],
+    ['   • תמונה: אימוג׳י אחד (מהמקלדת של הטלפון) או קישור לתמונה. בלי תמונה מוצג התרגום.'],
+    ['   • משפט לדוגמה: לא חובה. משפט קצר עם המילה.'],
+    ['   • פעיל: מסמנים ✔ מה לומדים עכשיו. מילים חדשות נכנסות לפי הסדר בגיליון, כמה בכל משחק.'],
+    ['   • כדי להתמקד בנושא של בית הספר: מורידים ✔ מהשאר ומוסיפים את המילים החדשות בראש הרשימה.'],
+    ['   • מילים שכבר נלמדו ממשיכות לחזור לפעמים לחזרה, גם אם הורדתם להן ✔.'],
+    [''],
+    ['⚙️ הגדרות: שם, בית, כמה מילים חדשות בכל משחק ואורך המשחק.'],
+    [''],
+    ['🏆 סיכום: מתעדכן לבד אחרי כל משחק. דקות תרגול, מילים שנשלטו, ומילים קשות שכדאי לתרגל יחד.'],
+    ['📊 התקדמות: מצב כל מילה. ⭐ = שלב (עד 5). "נשלטה ✅" = ענה נכון ב-3 ימים שונים.'],
+    ['📝 יומן משחקים: שורה לכל משחק.'],
+    [''],
+    ['🔄 שינויים בגיליון מגיעים למשחק בפעם הבאה שפותחים אותו (או בכפתור "סנכרן" במסך ההורים במשחק).'],
+    ['⚠️ לא למחוק או לשנות שמות של לשוניות. הלשונית _state מוסתרת ושייכת למשחק.'],
+  ];
+  s.getRange(1, 1, rows.length, 1).setValues(rows);
+  s.getRange('A1').setFontSize(16).setFontWeight('bold');
+  s.setColumnWidth(1, 760);
+}
+
+function showConnectLink() {
+  const url = ScriptApp.getService().getUrl();
+  const msg = url
+    ? 'הדביקו את הקישור הזה במסך ההורים במשחק (🔒 ← חיבור לגיליון):\n\n' + url
+    : 'עדיין לא פרסתם את הסקריפט. פריסה ← פריסה חדשה ← אפליקציית אינטרנט (ראו מדריך).';
+  SpreadsheetApp.getUi().alert(msg);
+}
+
+// ---------- רשת ----------
+function doGet(e) {
+  try {
+    if ((e.parameter || {}).a === 'pull') return json(pull());
+    return json({ ok: true, app: 'hogwarts-cup' });
+  } catch (err) {
+    return json({ ok: false, error: String(err) });
+  }
+}
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(20000);
+    const body = JSON.parse(e.postData.contents);
+    if (body.a === 'seed') return json(seed(body.words || []));
+    if (body.a === 'push') return json(push(body));
+    return json({ ok: false, error: 'unknown action' });
+  } catch (err) {
+    return json({ ok: false, error: String(err) });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function json(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function tab(name) {
+  const s = SpreadsheetApp.getActive().getSheetByName(name);
+  if (!s) throw new Error('missing tab: ' + name + ' (run setup)');
+  return s;
+}
+
+function pull() {
+  return {
+    ok: true,
+    sheetUrl: SpreadsheetApp.getActive().getUrl(),
+    settings: readSettings(),
+    words: readWords(),
+    state: readState(),
+    sessions: readLog(40),
+  };
+}
+
+function readSettings() {
+  const out = {};
+  const rows = tab(TABS.settings).getDataRange().getValues().slice(1);
+  SETTINGS.forEach(([key, label, def]) =&gt; {
+    const row = rows.find((r) =&gt; String(r[0]).trim() === label);
+    let v = row &amp;&amp; row[1] !== '' ? row[1] : def;
+    if (key === 'house') v = HOUSES[String(v).trim()] || 'gryffindor';
+    if (key === 'newPerMatch' || key === 'playsPerHalf') v = Number(v) || def;
+    out[key] = typeof v === 'string' ? v.trim() : v;
+  });
+  return out;
+}
+
+function readWords() {
+  const s = tab(TABS.words);
+  if (s.getLastRow() &lt; 2) return [];
+  return s.getRange(2, 1, s.getLastRow() - 1, 6).getValues()
+    .filter((r) =&gt; String(r[1]).trim())
+    .map((r) =&gt; ({
+      pack: String(r[0]).trim() || 'General',
+      en: String(r[1]).trim(),
+      he: String(r[2]).trim(),
+      emoji: String(r[3]).trim(),
+      sentence: String(r[4]).trim(),
+      active: r[5] === true || /^(true|v|✔|✓|כן|1)$/i.test(String(r[5]).trim()),
+    }));
+}
+
+function seed(words) {
+  const s = tab(TABS.words);
+  if (s.getLastRow() &gt; 1) return { ok: true, seeded: false };
+  if (!words.length) return { ok: true, seeded: false };
+  const rows = words.map((w) =&gt; [w.pack, w.en, w.he, w.emoji, w.sentence || '', w.active !== false]);
+  s.getRange(2, 1, rows.length, 6).setValues(rows);
+  s.getRange(2, 6, rows.length, 1).insertCheckboxes();
+  return { ok: true, seeded: true, count: rows.length };
+}
+
+// המצב נשמר כ-JSON מחולק לתאים (מגבלת 50 אלף תווים לתא).
+function readState() {
+  const s = SpreadsheetApp.getActive().getSheetByName(TABS.state);
+  if (!s || s.getLastRow() === 0) return null;
+  const txt = s.getRange(1, 1, s.getLastRow(), 1).getValues().map((r) =&gt; r[0]).join('');
+  try { return JSON.parse(txt); } catch (e) { return null; }
+}
+
+function writeState(state) {
+  const s = tab(TABS.state);
+  const txt = JSON.stringify(state);
+  const parts = [];
+  for (let i = 0; i &lt; txt.length; i += 40000) parts.push([txt.slice(i, i + 40000)]);
+  s.clear();
+  s.getRange(1, 1, parts.length, 1).setValues(parts);
+}
+
+function readLog(n) {
+  const s = tab(TABS.log);
+  const last = s.getLastRow();
+  if (last &lt; 2) return [];
+  const start = Math.max(2, last - n + 1);
+  return s.getRange(start, 1, last - start + 1, 8).getDisplayValues().map((r) =&gt; ({
+    date: r[0], time: r[1], minutes: Number(r[2]) || 0, score: r[3], opponent: r[4],
+    right: Number(r[5]) || 0, wrong: Number(r[6]) || 0, newWords: r[7],
+  }));
+}
+
+function push(body) {
+  if (body.state) writeState(body.state);
+  const sess = body.session;
+  if (sess &amp;&amp; sess.id) {
+    const log = tab(TABS.log);
+    const ids = PropertiesService.getScriptProperties();
+    if (!ids.getProperty('s:' + sess.id)) {
+      log.getRange('A:B').setNumberFormat('@'); // תאריך כטקסט yyyy-MM-dd, כדי שהסיכום יזהה ימים
+      log.appendRow([sess.date, sess.time, sess.minutes, sess.score, sess.opponent, sess.right, sess.wrong,
+        (sess.newWords || []).join(', '), (sess.hardWords || []).join(', '), (sess.words || []).join(', ')]);
+      ids.setProperty('s:' + sess.id, '1');
+    }
+  }
+  if (body.state) {
+    writeProgress(body.state);
+    writeSummary(body.state);
+  }
+  return { ok: true };
+}
+
+// ---------- לשוניות להורים ----------
+function wordStatus(p) {
+  if (!p || !p.seen) return 'עוד לא';
+  if (p.mastered) return 'נשלטה ✅';
+  if (p.wrong &gt;= 3 &amp;&amp; p.wrong &gt; p.right / 2) return 'קשה ⚠️';
+  return 'בלמידה 📘';
+}
+
+function writeProgress(state) {
+  const s = tab(TABS.progress);
+  const words = readWords();
+  const prog = state.words || {};
+  const seenKeys = {};
+  const rows = words.map((w) =&gt; {
+    const k = w.en.toLowerCase();
+    seenKeys[k] = true;
+    const p = prog[k] || {};
+    return [w.en, w.he, w.pack, wordStatus(p), p.seen ? '⭐'.repeat(p.box || 0) || '·' : '', p.right || 0, p.wrong || 0, (p.days || []).length, p.last || ''];
+  });
+  // מילים שנלמדו ונמחקו מהגיליון
+  Object.keys(prog).filter((k) =&gt; !seenKeys[k] &amp;&amp; prog[k].seen).forEach((k) =&gt; {
+    const p = prog[k];
+    rows.push([k, p.he || '', '(נמחקה מהרשימה)', wordStatus(p), '⭐'.repeat(p.box || 0), p.right || 0, p.wrong || 0, (p.days || []).length, p.last || '']);
+  });
+  const order = { 'קשה ⚠️': 0, 'בלמידה 📘': 1, 'נשלטה ✅': 2, 'עוד לא': 3 };
+  rows.sort((a, b) =&gt; order[a[3]] - order[b[3]]);
+  s.clear();
+  s.getRange(1, 1, 1, PROGRESS_HEADERS.length).setValues([PROGRESS_HEADERS]);
+  styleHeader(s, PROGRESS_HEADERS.length);
+  if (rows.length) s.getRange(2, 1, rows.length, PROGRESS_HEADERS.length).setValues(rows);
+}
+
+function writeSummary(state) {
+  const s = tab(TABS.summary);
+  const settings = readSettings();
+  const prog = state.words || {};
+  const game = state.game || {};
+  const vals = Object.keys(prog).map((k) =&gt; Object.assign({ en: k }, prog[k])).filter((p) =&gt; p.seen);
+  const mastered = vals.filter((p) =&gt; p.mastered);
+  const hard = vals.filter((p) =&gt; wordStatus(p) === 'קשה ⚠️').sort((a, b) =&gt; b.wrong - a.wrong);
+  const total = readWords().length;
+
+  // דקות לפי יום מהיומן
+  const log = tab(TABS.log);
+  const logRows = log.getLastRow() &gt; 1 ? log.getRange(2, 1, log.getLastRow() - 1, 7).getDisplayValues() : [];
+  const byDay = {};
+  logRows.forEach((r) =&gt; {
+    const d = r[0];
+    byDay[d] = byDay[d] || { min: 0, games: 0, right: 0, wrong: 0 };
+    byDay[d].min += Number(r[2]) || 0; byDay[d].games++; byDay[d].right += Number(r[5]) || 0; byDay[d].wrong += Number(r[6]) || 0;
+  });
+  const tz = Session.getScriptTimeZone();
+  const days = [];
+  let weekMin = 0;
+  for (let i = 0; i &lt; 7; i++) {
+    const d = Utilities.formatDate(new Date(Date.now() - i * 864e5), tz, 'yyyy-MM-dd');
+    const v = byDay[d] || { min: 0, games: 0, right: 0, wrong: 0 };
+    weekMin += v.min;
+    days.push([d, v.min, v.games, v.right, v.wrong]);
+  }
+  const lastRow = logRows[logRows.length - 1];
+  const rows = [
+    ['🏆 סיכום — ' + (settings.playerName || ''), ''],
+    ['עודכן', Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd HH:mm')],
+    ['משחק אחרון', lastRow ? lastRow[0] + ' ' + lastRow[1] : '—'],
+    ['דקות תרגול ב-7 הימים האחרונים', weekMin],
+    ['משחקים בסך הכול', logRows.length],
+    ['מילים שנשלטו ✅', mastered.length + ' מתוך ' + total],
+    ['מילים בלמידה 📘', vals.length - mastered.length],
+    ['מילים שעוד לא הגיעו', Math.max(0, total - vals.length)],
+    ['מילים קשות ⚠️ (כדאי לתרגל יחד)', hard.slice(0, 12).map((p) =&gt; p.en + (p.he ? ' (' + p.he + ')' : '')).join(', ') || 'אין 🎉'],
+    ['שלב בליגה', 'עונה ' + (game.season || 1) + ', משחק ' + ((game.stage || 0) + 1) + ' מתוך 4'],
+    ['גליאונים 🪙', game.coins || 0],
+    ['', ''],
+    ['📅 שבוע אחרון', ''],
+  ];
+  s.clear();
+  s.getRange(1, 1, rows.length, 2).setValues(rows);
+  s.getRange(rows.length + 1, 1, 1, 5).setValues([['תאריך', 'דקות', 'משחקים', 'נכון', 'טעויות']]).setFontWeight('bold');
+  s.getRange(rows.length + 2, 1, days.length, 5).setValues(days);
+  s.getRange('A1').setFontSize(16).setFontWeight('bold');
+  s.getRange(2, 1, rows.length - 1, 1).setFontWeight('bold');
+  s.setColumnWidth(1, 260).setColumnWidth(2, 420);
+  s.getRange(1, 2, rows.length, 1).setWrap(true);
+}
+</textarea>
+    <label class="check"><input type="checkbox" />הדבקתי ושמרתי</label>
+  </section>
+
+  <section class="step" data-step="4">
+    <h2><span class="num"><b>4</b></span>מריצים הכנה (ונותנים הרשאה)</h2>
+    <ol>
+      <li>בשורת הכלים שמעל הקוד יש רשימה עם שם של פונקציה. בוחרים בה את <span class="ui">setup</span>.</li>
+      <li>לוחצים <span class="ui">▶ הפעלה</span> <span class="en">(Run)</span>.</li>
+      <li>Google מבקשת הרשאה. זה קורה רק בפעם הראשונה:
+        <ul>
+          <li><span class="ui">בדיקת ההרשאות</span> <span class="en">(Review permissions)</span> ← בוחרים את החשבון שלכם.</li>
+          <li>מופיע מסך "Google לא אימתה את האפליקציה". לוחצים <span class="ui">מתקדם</span> <span class="en">(Advanced)</span>, ואז <span class="ui">מעבר אל... (לא בטוח)</span> <span class="en">(Go to… unsafe)</span>.</li>
+          <li>לוחצים <span class="ui">אישור</span> <span class="en">(Allow)</span>.</li>
+        </ul>
+      </li>
+      <li>חוזרים ללשונית של הגיליון. אמורות להופיע למטה לשוניות חדשות: 📖 הוראות, 📚 מילים, ⚙️ הגדרות, 🏆 סיכום ועוד.</li>
+    </ol>
+    <div class="note">🔒 <b>למה Google מזהירה?</b> הסקריפט נכתב במיוחד בשבילכם ולא עבר את בדיקת החנות של Google. הוא ניגש רק לגיליון הזה ולא לשום דבר אחר בחשבון.</div>
+    <label class="check"><input type="checkbox" />הלשוניות החדשות מופיעות בגיליון</label>
+  </section>
+
+  <section class="step" data-step="5">
+    <h2><span class="num"><b>5</b></span>מפרסמים את הסקריפט ומעתיקים קישור</h2>
+    <ol>
+      <li>בעורך הסקריפטים, למעלה משמאל: <span class="path"><span class="ui">פריסה</span> ← <span class="ui">פריסה חדשה</span></span> <span class="en">(Deploy → New deployment)</span></li>
+      <li>לוחצים על גלגל השיניים ⚙️ שליד "בחירת סוג", ובוחרים <span class="ui">אפליקציית אינטרנט</span> <span class="en">(Web app)</span>.</li>
+      <li>ממלאים שתי הגדרות:
+        <ul>
+          <li><span class="ui">הפעלה בתור</span> <span class="en">(Execute as)</span>: <b>אני</b> <span class="en">(Me)</span></li>
+          <li><span class="ui">למי יש גישה</span> <span class="en">(Who has access)</span>: <b>כל אחד</b> <span class="en">(Anyone)</span></li>
+        </ul>
+      </li>
+      <li>לוחצים <span class="ui">פריסה</span> <span class="en">(Deploy)</span>. אם Google שוב מבקשת הרשאה, מאשרים כמו בשלב 4.</li>
+      <li>מופיע קישור בשם <span class="ui">אפליקציית אינטרנט</span> <span class="en">(Web app URL)</span> שמסתיים ב-<code>/exec</code>. לוחצים <span class="ui">העתקה</span> <span class="en">(Copy)</span>.</li>
+      <li>מדביקים אותו כאן:</li>
+    </ol>
+    <input class="url" id="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" spellcheck="false" />
+    <div class="err" id="err"></div>
+    <div class="note">⚠️ "כל אחד" אומר שמי שיש לו את הקישור יכול לקרוא את רשימת המילים. לכן לא מפרסמים אותו, ושולחים אותו רק לעצמכם.</div>
+    <label class="check"><input type="checkbox" />הדבקתי את הקישור</label>
+  </section>
+
+  <section class="step" data-step="6">
+    <h2><span class="num"><b>6</b></span>מחברים את הטאבלט של הילד</h2>
+    <p id="needUrl">קודם מדביקים את הקישור בשלב 5. אז יופיע כאן קוד לסריקה.</p>
+    <div class="qrbox" id="qrbox">
+      <p><b>סורקים את הקוד עם המצלמה של הטאבלט</b>, ונוגעים בקישור שמופיע. המשחק נפתח ומתחבר לגיליון.</p>
+      <div id="qr" aria-label="קוד QR לחיבור הטאבלט"></div>
+      <div class="row" style="justify-content:center">
+        <button class="btn secondary" id="copyLink">📋 העתקת קישור לטאבלט</button>
+        <a class="btn secondary" id="waLink" target="_blank" rel="noopener">💬 שליחה לעצמי בווטסאפ</a>
+      </div>
+      <p style="font-size:16px;color:var(--muted)">אין מצלמה? שולחים לעצמכם את הקישור ופותחים אותו בטאבלט.</p>
+    </div>
+    <h3 style="margin:16px 0 6px;font-size:19px">אחרי שהמשחק נפתח בטאבלט: הוספה למסך הבית</h3>
+    <p style="margin:0 0 6px;font-size:16px">חשוב לעשות את זה <b>מאותו חלון שנפתח מהקישור</b>, כדי שהאפליקציה תזכור את החיבור.</p>
+    <div class="grid2">
+      <div><h3>🍎 אייפד / אייפון</h3>ב-Safari: כפתור השיתוף <b>⬆️</b> ← <b>הוספה למסך הבית</b> ← <b>הוספה</b>.</div>
+      <div><h3>🤖 אנדרואיד</h3>ב-Chrome: <b>⋮</b> (למעלה) ← <b>הוספה למסך הבית</b> או <b>התקנת האפליקציה</b>.</div>
+    </div>
+    <p style="font-size:16px;margin-top:12px">✅ <b>איך יודעים שזה עבד?</b> במשחק לוחצים 🔒, עונים על שאלת הכפל, ובלשונית <b>🔗 גיליון</b> כתוב "מחובר לגיליון". המילים מופיעות עכשיו גם בגיליון, בלשונית 📚 מילים.</p>
+    <label class="check"><input type="checkbox" />הטאבלט מחובר</label>
+  </section>
+
+  <section class="step" data-step="7" style="border-style:dashed">
+    <h2><span class="num" style="background:var(--gold);color:#2a1a10"><b>★</b></span>ומעכשיו: מה עושים בגיליון</h2>
+    <ul>
+      <li><b>⚙️ הגדרות:</b> כותבים את שם הילד ובוחרים את הבית שלו. אפשר גם לשנות כמה מילים חדשות נכנסות בכל משחק ואת אורך המשחק.</li>
+      <li><b>📚 מילים:</b> כבר יש בה 66 מילים ראשונות. כדי להוסיף מילה, כותבים שורה חדשה: נושא, מילה באנגלית, תרגום, אימוג׳י (מהמקלדת), ו-✔ בעמודה "פעיל".
+        כדי להתמקד במילים של בית הספר, מורידים ✔ מהשאר ומוסיפים את החדשות בראש הרשימה.</li>
+      <li><b>🏆 סיכום</b> ו-<b>📊 התקדמות:</b> מתעדכנים לבד אחרי כל משחק. כאן רואים כמה דקות הוא תרגל, אילו מילים הוא כבר יודע, ואילו קשות לו (כדאי לתרגל אותן יחד).</li>
+      <li>שינוי בגיליון מגיע לטאבלט בפעם הבאה שפותחים את המשחק.</li>
+    </ul>
+    <div class="note">ההוראות האלה נמצאות גם בתוך הגיליון, בלשונית <b>📖 הוראות</b>.</div>
+  </section>
+
+  <footer>נתקעתם באחד השלבים? צלמו מסך ושלחו, ונעזור.</footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(() => {
+  const GAME = new URL('./', location.href).href;
+  const KEY = 'hogcup-setup:v1';
+  let st = { done: {}, url: '' };
+  try { Object.assign(st, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+
+  const steps = [...document.querySelectorAll('.step[data-step]')].filter((s) => s.querySelector('.check'));
+  function paint() {
+    let n = 0;
+    steps.forEach((s) => {
+      const on = !!st.done[s.dataset.step];
+      s.classList.toggle('done', on);
+      s.querySelector('.check input').checked = on;
+      if (on) n++;
+    });
+    document.getElementById('bar').style.width = (n / steps.length) * 100 + '%';
+    document.getElementById('barText').textContent = n === steps.length ? '🎉 הכול מוכן!' : `${n} מתוך ${steps.length} שלבים`;
+  }
+  steps.forEach((s) => s.querySelector('.check input').addEventListener('change', (e) => { st.done[s.dataset.step] = e.target.checked; save(); paint(); }));
+
+  async function copy(text, btn, label) {
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+    btn.classList.add('copied'); btn.textContent = '✓ הועתק!';
+    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = label; }, 1800);
+  }
+  const code = document.getElementById('code');
+  // פתיחה מקומית בלי בנייה: טוענים את הסקריפט מהקובץ
+  if (code.value.includes('CODE_' + 'GS')) fetch('apps-script/Code.gs').then((r) => r.text()).then((t) => (code.value = t)).catch(() => {});
+  document.getElementById('copyCode').onclick = (e) => copy(code.value, e.currentTarget, '📋 העתקת הסקריפט');
+
+  const valid = (u) => /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec\/?$/.test(u);
+  const urlIn = document.getElementById('url'), err = document.getElementById('err');
+  let link = '';
+  function showLink() {
+    const u = urlIn.value.trim();
+    const qrbox = document.getElementById('qrbox'), need = document.getElementById('needUrl'), qr = document.getElementById('qr');
+    urlIn.classList.toggle('bad', !!u && !valid(u));
+    err.textContent = !u || valid(u) ? '' : u.includes('/dev') ? 'זה קישור הבדיקה (dev). צריך את הקישור של "אפליקציית אינטרנט" שמסתיים ב-/exec.' : 'הקישור צריך להתחיל ב-https://script.google.com/macros/s/ ולהסתיים ב-/exec';
+    if (!valid(u)) { qrbox.classList.remove('show'); need.hidden = false; return; }
+    st.url = u; save();
+    link = GAME + '#connect=' + encodeURIComponent(u.replace(/\/$/, ''));
+    need.hidden = true; qrbox.classList.add('show');
+    qr.innerHTML = '';
+    if (window.QRCode) new QRCode(qr, { text: link, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.L });
+    else qr.textContent = link;
+    document.getElementById('waLink').href = 'https://wa.me/?text=' + encodeURIComponent('גביע הוגוורטס, לפתוח בטאבלט: ' + link);
+  }
+  urlIn.addEventListener('input', showLink);
+  document.getElementById('copyLink').onclick = (e) => copy(link, e.currentTarget, '📋 העתקת קישור לטאבלט');
+  if (st.url) urlIn.value = st.url;
+  showLink();
+  paint();
+})();
+</script>
+</body>
+</html>

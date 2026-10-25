@@ -926,6 +926,8 @@ const FACTS = [
 // חיבור לגיליון Google של ההורים (Apps Script web app). בלי חיבור — הכול עובד מקומית.
 // הקישור נשמר רק במכשיר (localStorage), לא בקוד שעולה לאינטרנט.
 // אפשר לחבר מכשיר גם בקישור: <כתובת המשחק>#connect=<קישור הסקריפט>
+// הקישור נשאר בכתובת בכוונה: באייפד, "הוספה למסך הבית" שומרת את הכתובת הנוכחית,
+// והאפליקציה במסך הבית לא רואה את ה-localStorage של Safari. כך היא מתחברת בעצמה.
 const Sheet = (() => {
   const URL_KEY = 'hogcup:sheetUrl';
   let url = '';
@@ -942,8 +944,8 @@ const Sheet = (() => {
     const m = location.hash.match(/connect=([^&]+)/);
     if (!m) return false;
     const u = decodeURIComponent(m[1]);
-    history.replaceState(null, '', location.pathname + location.search);
     if (!valid(u)) return false;
+    if (u === url) return false;
     setUrl(u);
     return true;
   }
@@ -2821,7 +2823,8 @@ const Pitch = (() => {
           <p class="hint">פותחים את הקישור הזה במכשיר השני (או סורקים/שולחים בווטסאפ):</p>
           <input class="url" readonly value="${esc(connectLink)}" onclick="this.select()" />
           <div class="btns"><button class="ghost" data-a="copy">📋 העתק קישור</button><button class="ghost" data-a="disconnect">ניתוק</button></div>`
-        : `<p class="hint">מדביקים כאן את קישור הסקריפט מהגיליון (בגיליון: ⚽ גביע הוגוורטס ← 🔗 קישור חיבור למשחק).</p>
+        : `<p class="hint">עוד אין גיליון? <a href="setup.html" target="_blank" rel="noopener">הוראות הקמה שלב אחרי שלב</a> (במחשב, פעם אחת).</p>
+          <p class="hint">מדביקים כאן את קישור הסקריפט מהגיליון (בגיליון: ⚽ גביע הוגוורטס ← 🔗 קישור חיבור למשחק).</p>
           <input id="urlIn" class="url" placeholder="https://script.google.com/macros/s/.../exec" />
           <div class="btns"><button class="go" data-a="connect">🔗 חיבור</button></div>`}`;
     } else {
@@ -2851,7 +2854,7 @@ const Pitch = (() => {
       }
       if (a === 'sync') { toast('🔄 מסנכרן...'); const ok = await syncNow(); toast(ok ? '✅ מסונכרן' : '⚠️ אין חיבור. ננסה שוב בפעם הבאה'); openParents('sheet'); }
       if (a === 'copy') { const i = $('.url'); i.select(); try { await navigator.clipboard.writeText(i.value); toast('הועתק ✔'); } catch (e) { document.execCommand('copy'); toast('הועתק ✔'); } }
-      if (a === 'disconnect') { Sheet.setUrl(''); openParents('sheet'); renderMenu(); }
+      if (a === 'disconnect') { Sheet.setUrl(''); history.replaceState(null, '', location.pathname + location.search); openParents('sheet'); renderMenu(); }
     });
   }
 
