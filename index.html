@@ -1483,10 +1483,9 @@ const Pitch = (() => {
   function setTeams(home, away) {
     house.home = home; house.away = away;
     rebuildHero();
-    [keeper, striker].forEach((p) => { scene.remove(p); removeBlob(p); });
-    keeper = teamPerson(away, { num: '1', hair: 0x1b1b1b, skin: 0xe0ac69 });
-    striker = teamPerson(away, { num: '9', hair: 0x6b4423, skin: 0xffdbac });
-    scene.add(keeper, striker);
+    const keep = (o, n) => { n.position.copy(o.position); n.rotation.copy(o.rotation); n.visible = o.visible; scene.remove(o); removeBlob(o); scene.add(n); return n; };
+    keeper = keep(keeper, teamPerson(away, { num: '1', hair: 0x1b1b1b, skin: 0xe0ac69 }));
+    striker = keep(striker, teamPerson(away, { num: '9', hair: 0x6b4423, skin: 0xffdbac }));
     dressDogs();
   }
 
